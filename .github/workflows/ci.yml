@@ -1,0 +1,182 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, "3.10", "3.11"]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', '**/setup.py', '**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+    
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+    
+    - name: Type check with mypy
+      run: |
+        mypy module_scaffolding_system.py --ignore-missing-imports
+    
+    - name: Format check with black
+      run: |
+        black --check .
+    
+    - name: Test template generation
+      run: |
+        python -c "
+        import sys
+        sys.path.insert(0, '.')
+        
+        # Mock dependencies for testing
+        class MockTemplate:
+            def __init__(self, template_str):
+                self.template = template_str
+            def render(self, **kwargs):
+                result = self.template
+                for key, value in kwargs.items():
+                    result = result.replace('{{ ' + key + ' }}', str(value))
+                return result
+        
+        import module_scaffolding_system
+        module_scaffolding_system.Template = MockTemplate
+        
+        from module_scaffolding_system import ModuleGenerator
+        
+        # Test all module types
+        generator = ModuleGenerator()
+        
+        for module_type in ['CORE', 'INTEGRATION', 'SUPPORTING', 'TECHNICAL']:
+            result = generator.generate_module(
+                name=f'test-{module_type.lower()}',
+                module_type=module_type,
+                domain='testing',
+                output_dir=f'./test-{module_type.lower()}',
+                ai_ready=True
+            )
+            assert result.success, f'Failed to generate {module_type} module: {result.error}'
+            print(f'✅ {module_type} module generated successfully')
+        
+        print('🎉 All module types generated successfully!')
+        "
+    
+    - name: Validate generated modules
+      run: |
+        python -c "
+        import os
+        import sys
+        
+        # Check that all expected files are generated
+        for module_type in ['CORE', 'INTEGRATION', 'SUPPORTING', 'TECHNICAL']:
+            module_dir = f'./test-{module_type.lower()}/test-{module_type.lower()}'
+            
+            expected_files = [
+                'core.py', 'types.py', 'interface.py', '__init__.py',
+                'tests/test_core.py', 'tests/test_contracts.py',
+                'AI_COMPLETION.md', 'requirements.txt', 'pytest.ini', '.gitignore'
+            ]
+            
+            for file in expected_files:
+                file_path = os.path.join(module_dir, file)
+                assert os.path.exists(file_path), f'Missing file: {file_path}'
+                
+                # Check file is not empty
+                size = os.path.getsize(file_path)
+                assert size > 0, f'Empty file: {file_path}'
+            
+            print(f'✅ {module_type} module files validated')
+        
+        print('🎉 All generated modules validated!')
+        "
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run security scan
+      uses: securecodewarrior/github-action-add-sarif@v1
+      with:
+        sarif-file: 'security-scan-results.sarif'
+      continue-on-error: true
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    
+    - name: Build package
+      run: python -m build
+    
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        twine upload dist/*
+
+  auto-update-templates:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Check for template improvements
+      run: |
+        python scripts/check_template_improvements.py
+    
+    - name: Auto-commit template updates
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add -A
+        git diff --staged --quiet || git commit -m "auto: update templates based on community feedback"
+        git push
