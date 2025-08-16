@@ -41,7 +41,8 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/standardized-modules/framework",
     
-    packages=find_packages(),
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
     
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -70,7 +71,7 @@ setup(
     
     entry_points={
         "console_scripts": [
-            "sm=module_scaffolding_system:cli",
+            "sm=standardized_modules.cli.commands:cli",
         ],
     },
     

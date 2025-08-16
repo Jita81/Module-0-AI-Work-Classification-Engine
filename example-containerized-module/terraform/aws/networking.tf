@@ -1,1 +1,0 @@
-# VPC and networking configuration

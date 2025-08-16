@@ -59,7 +59,7 @@ all = [
 ]
 
 [project.scripts]
-sm = "module_scaffolding_system:cli"
+sm = "standardized_modules.cli.commands:cli"
 
 [project.urls]
 "Homepage" = "https://github.com/standardized-modules/framework"
