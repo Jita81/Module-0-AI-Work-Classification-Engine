@@ -1,0 +1,47 @@
+{
+  "threshold": 75,
+  "perspectives": ["security", "quality", "performance"],
+  "max_file_size_kb": 2000,
+  "max_workers": 1,
+  "cache_enabled": true,
+  "cache_dir": ".ai_review_cache",
+  "chunk_size_lines": 200,
+  "max_retries": 3,
+  "retry_delay": 2,
+  "sequential_perspectives": false,
+  "exclude_patterns": [
+    "**/vendor/**",
+    "**/node_modules/**",
+    "**/*.min.js",
+    "**/test/**",
+    "**/*test*/**",
+    "**/docs/**",
+    "**/*.md",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "**/venv/**",
+    "**/.env",
+    "**/LICENSE",
+    "**/.gitignore",
+    "**/requirements*.txt",
+    "**/setup.py",
+    "**/pyproject.toml"
+  ],
+  "automated_agile": {
+    "sprint_context": true,
+    "framework_patterns": true,
+    "json_pipeline_focus": true,
+    "self_improvement_tracking": true
+  },
+  "quality_gates": {
+    "critical_issues_threshold": 0,
+    "high_severity_threshold": 3,
+    "overall_score_minimum": 75,
+    "block_merge_on_failure": false
+  },
+  "reporting": {
+    "include_sprint_metrics": true,
+    "track_framework_evolution": true,
+    "automated_retrospective_data": true
+  }
+}
