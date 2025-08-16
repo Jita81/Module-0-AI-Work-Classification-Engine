@@ -1,0 +1,355 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Microservice Specification",
+  "description": "JSON schema for automated microservice generation",
+  "type": "object",
+  "required": [
+    "microservice_type",
+    "domain",
+    "tdd_tests",
+    "requirements"
+  ],
+  "properties": {
+    "microservice_type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$",
+      "minLength": 3,
+      "maxLength": 50,
+      "description": "Kebab-case name for the microservice (e.g., 'payment-processor', 'user-auth-api')"
+    },
+    "domain": {
+      "type": "string",
+      "enum": [
+        "authentication",
+        "payments",
+        "notifications",
+        "data-processing",
+        "analytics",
+        "e-commerce",
+        "fintech",
+        "healthcare",
+        "logistics",
+        "communication",
+        "infrastructure",
+        "monitoring",
+        "general"
+      ],
+      "description": "Business domain for the microservice"
+    },
+    "module_type": {
+      "type": "string",
+      "enum": ["CORE", "INTEGRATION", "SUPPORTING", "TECHNICAL"],
+      "default": "CORE",
+      "description": "Framework module type determining infrastructure patterns"
+    },
+    "tdd_tests": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["test_name", "description", "expected_behavior"],
+        "properties": {
+          "test_name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$",
+            "minLength": 5,
+            "maxLength": 80,
+            "description": "Snake_case test method name"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 200,
+            "description": "Clear description of what the test validates"
+          },
+          "expected_behavior": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 200,
+            "description": "Specific expected outcome or behavior"
+          },
+          "test_data": {
+            "type": "object",
+            "description": "Optional test data for the scenario"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"],
+            "default": "medium",
+            "description": "Test priority for implementation order"
+          }
+        }
+      },
+      "description": "TDD test specifications that drive implementation"
+    },
+    "requirements": {
+      "type": "object",
+      "required": ["performance"],
+      "properties": {
+        "performance": {
+          "type": "string",
+          "pattern": "^< \\d+ms response time$",
+          "description": "Performance requirement in format '< 200ms response time'"
+        },
+        "security": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 100,
+          "description": "Security requirements (e.g., 'PCI DSS compliant', 'OAuth2 required')"
+        },
+        "integration": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 30
+          },
+          "uniqueItems": true,
+          "description": "External services this microservice must integrate with"
+        },
+        "scalability": {
+          "type": "string",
+          "description": "Scalability requirements (e.g., '1000 concurrent users', 'auto-scaling enabled')"
+        },
+        "compliance": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["GDPR", "HIPAA", "SOC2", "PCI-DSS", "ISO27001"]
+          },
+          "uniqueItems": true,
+          "description": "Regulatory compliance requirements"
+        }
+      },
+      "description": "Non-functional requirements for the microservice"
+    },
+    "deployment": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "type": "string",
+          "enum": ["kubernetes", "docker-compose", "lambda", "cloud-run"],
+          "default": "kubernetes",
+          "description": "Deployment target platform"
+        },
+        "cloud_provider": {
+          "type": "string",
+          "enum": ["aws", "azure", "gcp", "multi-cloud"],
+          "default": "aws",
+          "description": "Cloud provider for deployment"
+        },
+        "auto_scaling": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic scaling"
+        },
+        "high_availability": {
+          "type": "boolean",
+          "default": true,
+          "description": "Deploy with high availability configuration"
+        }
+      },
+      "description": "Deployment configuration options"
+    },
+    "api": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["REST", "GraphQL", "gRPC", "WebSocket", "Event-Driven"],
+          "default": "REST",
+          "description": "API type and communication pattern"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v\\d+$",
+          "default": "v1",
+          "description": "API version in format 'v1'"
+        },
+        "authentication": {
+          "type": "string",
+          "enum": ["JWT", "OAuth2", "API-Key", "Basic", "None"],
+          "default": "JWT",
+          "description": "Authentication mechanism"
+        },
+        "rate_limiting": {
+          "type": "object",
+          "properties": {
+            "requests_per_minute": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 1000
+            },
+            "burst_size": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          }
+        }
+      },
+      "description": "API configuration and specifications"
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "storage": {
+          "type": "string",
+          "enum": ["postgresql", "mysql", "mongodb", "redis", "s3", "none"],
+          "default": "postgresql",
+          "description": "Primary data storage technology"
+        },
+        "caching": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable caching layer"
+        },
+        "backup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automated backups"
+        },
+        "encryption": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable data encryption at rest"
+        }
+      },
+      "description": "Data storage and management configuration"
+    },
+    "monitoring": {
+      "type": "object",
+      "properties": {
+        "metrics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable metrics collection"
+        },
+        "logging": {
+          "type": "string",
+          "enum": ["structured", "plain", "json"],
+          "default": "structured",
+          "description": "Logging format"
+        },
+        "tracing": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable distributed tracing"
+        },
+        "health_checks": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable health check endpoints"
+        }
+      },
+      "description": "Monitoring and observability configuration"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "default": "1.0.0",
+          "description": "Microservice version in semver format"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author or team responsible for the microservice"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 500,
+          "description": "Detailed description of microservice functionality"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 20
+          },
+          "uniqueItems": true,
+          "maxItems": 10,
+          "description": "Tags for categorization and discovery"
+        },
+        "repository": {
+          "type": "string",
+          "format": "uri",
+          "description": "Repository URL for the microservice"
+        }
+      },
+      "description": "Metadata about the microservice"
+    }
+  },
+  "examples": [
+    {
+      "microservice_type": "payment-processor",
+      "domain": "fintech",
+      "module_type": "INTEGRATION",
+      "tdd_tests": [
+        {
+          "test_name": "process_valid_payment",
+          "description": "Should successfully process a valid payment request",
+          "expected_behavior": "Returns success response with transaction ID and confirmation",
+          "priority": "critical"
+        },
+        {
+          "test_name": "reject_invalid_card",
+          "description": "Should reject payments with invalid card data",
+          "expected_behavior": "Returns error with specific validation message",
+          "priority": "critical"
+        },
+        {
+          "test_name": "handle_payment_timeout",
+          "description": "Should handle external payment gateway timeouts gracefully",
+          "expected_behavior": "Returns timeout error and queues for retry",
+          "priority": "high"
+        }
+      ],
+      "requirements": {
+        "performance": "< 200ms response time",
+        "security": "PCI DSS compliant payment processing",
+        "integration": ["stripe", "paypal", "bank-api"],
+        "compliance": ["PCI-DSS", "SOC2"]
+      },
+      "deployment": {
+        "target": "kubernetes",
+        "cloud_provider": "aws",
+        "auto_scaling": true,
+        "high_availability": true
+      },
+      "api": {
+        "type": "REST",
+        "version": "v1",
+        "authentication": "JWT",
+        "rate_limiting": {
+          "requests_per_minute": 500,
+          "burst_size": 20
+        }
+      },
+      "data": {
+        "storage": "postgresql",
+        "caching": true,
+        "backup": true,
+        "encryption": true
+      },
+      "monitoring": {
+        "metrics": true,
+        "logging": "structured",
+        "tracing": true,
+        "health_checks": true
+      },
+      "metadata": {
+        "version": "1.0.0",
+        "author": "Fintech Team",
+        "description": "High-performance payment processing microservice with multi-gateway support",
+        "tags": ["payments", "fintech", "integration", "pci-compliant"]
+      }
+    }
+  ]
+}
