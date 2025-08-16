@@ -33,7 +33,7 @@ dev_requirements = [
 
 setup(
     name="standardized-modules-framework",
-    version="1.0.0",
+    version="1.1.0",
     author="Standardized Modules Framework",
     author_email="contact@standardized-modules.dev",
     description="AI-optimized module scaffolding framework for rapid development",

@@ -1,4 +1,4 @@
-# Standardized Modules Framework v1.0.0
+# Standardized Modules Framework v1.1.0
 
 [![Tests](https://img.shields.io/badge/tests-6%2F6_suites_passing-brightgreen.svg)](./tests/)
 [![Performance](https://img.shields.io/badge/performance-0.002s%2Fmodule-brightgreen.svg)](#performance-benchmarks)
@@ -62,6 +62,55 @@ user-management/
 │   └── usage_example.py     # Usage example template
 └── AI_COMPLETION.md         # Detailed AI completion instructions
 ```
+
+### **🐳 NEW: Production-Ready Containerized Modules (v1.1.0)**
+
+Generate production-ready microservices with complete infrastructure:
+
+```bash
+# Create containerized module with full Kubernetes deployment
+sm create-module payment-api --type=CORE --domain=payments --with-docker
+
+# Deploy locally
+cd payment-api
+docker-compose up
+
+# Deploy to cloud
+./scripts/deploy.sh staging
+```
+
+**With `--with-docker` (28 total files):**
+```
+payment-api/
+├── [10 standard module files above]
+├── Dockerfile                 # Multi-stage production container
+├── docker-compose.yml        # Local development environment
+├── k8s/                      # 5 Kubernetes manifests
+│   ├── deployment.yaml       # Rolling updates, resource limits
+│   ├── service.yaml         # Internal service communication
+│   ├── hpa.yaml            # Horizontal pod autoscaling
+│   ├── ingress.yaml        # External access & SSL
+│   └── configmap.yaml      # Environment configuration
+├── .github/workflows/        # 2 CI/CD pipelines
+│   ├── ci.yml              # Automated testing & security scans
+│   └── cd.yml              # Staging & production deployment
+├── terraform/aws/           # 6 infrastructure files
+│   ├── main.tf             # EKS cluster, RDS, ElastiCache
+│   ├── variables.tf        # Configuration variables
+│   ├── outputs.tf          # Infrastructure outputs
+│   └── [networking, security, iam].tf
+└── scripts/                 # 3 deployment automation scripts
+    ├── build.sh            # Build, test, security scan
+    ├── deploy.sh           # Kubernetes deployment
+    └── test.sh             # Comprehensive testing
+```
+
+**Generated Infrastructure Features:**
+- ✅ **Security-first**: Non-root containers, encrypted storage, security scans
+- ✅ **Auto-scaling**: HPA for CPU/memory, EKS node groups
+- ✅ **Production-ready**: Health checks, rolling updates, zero-downtime deployment
+- ✅ **CI/CD automation**: GitHub Actions with quality gates
+- ✅ **Infrastructure as Code**: Complete Terraform for AWS
 
 ## 🎯 Module Types
 

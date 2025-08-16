@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "standardized-modules-framework"
-version = "1.0.0"
+version = "1.1.0"
 description = "AI-optimized module scaffolding framework for rapid development"
 authors = [
     {name = "Standardized Modules Framework", email = "contact@standardized-modules.dev"}
