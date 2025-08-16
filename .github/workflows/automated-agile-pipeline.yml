@@ -5,9 +5,9 @@ on:
     branches: [ main, 'sprint-*' ]
   pull_request:
     branches: [ main, 'sprint-*' ]
-  schedule:
-    # Daily automated progress tracking at 9 AM UTC
-    - cron: '0 9 * * *'
+  # schedule:
+    # Daily automated progress tracking at 9 AM UTC (disabled per user preference)
+    # - cron: '0 9 * * *'
   workflow_dispatch:
     inputs:
       sprint_action:
@@ -30,7 +30,7 @@ jobs:
   sprint_tracking:
     name: Sprint Progress Tracking
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event.inputs.sprint_action == 'daily_progress'
+    if: github.event.inputs.sprint_action == 'daily_progress'
     
     steps:
       - name: Checkout Repository
