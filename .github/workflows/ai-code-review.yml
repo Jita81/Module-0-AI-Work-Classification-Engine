@@ -56,20 +56,26 @@ jobs:
           restore-keys: |
             ai-review-cache-
             
-      - name: Setup AI Review Tool
+      - name: Setup Integrated Quality Tools
         run: |
-          # Copy the review tool from our src directory
-          cp src/ai_code_review_tool.py ai_review.py
+          # Install Python dependencies for both tools
+          pip install urllib3 requests
+          
+          # Copy integrated quality system
+          cp src/core/quality_gates/ai_code_review_enhanced.py ai_review.py
+          cp src/core/quality_gates/integrated_quality_system.py quality_system.py
+          chmod +x src/core/quality_gates/codetest_integration.sh
+          
+          # Compile Python files
           python -m py_compile ai_review.py
-          # Install required dependencies
-          pip install urllib3
+          python -m py_compile quality_system.py
           
       - name: Configure Git
         run: |
           # Ensure we have the base branch for comparison
           git fetch origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
           
-      - name: Run AI Review
+      - name: Run Integrated Quality Analysis
         id: review
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -89,29 +95,50 @@ jobs:
             echo "REVIEW_FAILED=2" >> $GITHUB_ENV
             exit 1
           else
-            echo "API key is set (length: ${#ANTHROPIC_API_KEY})"
+            echo "✅ Anthropic API key configured (length: ${#ANTHROPIC_API_KEY})"
           fi
           
-          # Run review on changed files
-          set +e  # Don't exit on error
-          python ai_review.py \
-            --changed \
-            --base-branch ${{ github.base_ref }} \
-            --output github \
-            --output-file review-comment.md \
-            --threshold 30 \
-            2>&1 | tee review-log.txt
-          REVIEW_EXIT_CODE=$?
-          echo "REVIEW_FAILED=$REVIEW_EXIT_CODE" >> $GITHUB_ENV
+          # Detect module type from repository structure
+          MODULE_TYPE="CORE"
+          if [ -d "src/integration" ] || grep -q "integration" README.md 2>/dev/null; then
+            MODULE_TYPE="INTEGRATION"
+          elif [ -d "src/support" ] || grep -q "support" README.md 2>/dev/null; then
+            MODULE_TYPE="SUPPORTING"
+          elif [ -d "src/technical" ] || grep -q "technical" README.md 2>/dev/null; then
+            MODULE_TYPE="TECHNICAL"
+          fi
           
-          # Also generate JSON for artifacts
+          echo "🔍 Running Integrated Quality Analysis (Module Type: $MODULE_TYPE)"
+          
+          # Run integrated quality system
+          set +e  # Don't exit on error
+          python quality_system.py . $MODULE_TYPE > integrated-report.md 2>&1
+          INTEGRATED_EXIT_CODE=$?
+          echo "REVIEW_FAILED=$INTEGRATED_EXIT_CODE" >> $GITHUB_ENV
+          
+          # Also run traditional AI review for compatibility
           python ai_review.py \
             --changed \
             --base-branch ${{ github.base_ref }} \
             --output json \
-            --output-file review-report.json \
-            --no-cache \
-            2>&1 | tee -a review-log.txt || true
+            --output-file ai-review-report.json \
+            --threshold 75 \
+            2>&1 | tee ai-review-log.txt || true
+          
+          # Create unified report
+          echo "# 🔍 Integrated Quality Analysis Report" > review-comment.md
+          echo "" >> review-comment.md
+          echo "**Analysis Type**: AI Code Review + Framework Validation" >> review-comment.md
+          echo "**Module Type**: $MODULE_TYPE" >> review-comment.md
+          echo "**Tools Used**: [CODEREVIEW](https://github.com/Jita81/CODEREVIEW) + [CODETEST](https://github.com/Jita81/CODETEST)" >> review-comment.md
+          echo "" >> review-comment.md
+          
+          if [ -f integrated-report.md ]; then
+            cat integrated-report.md >> review-comment.md
+          else
+            echo "⚠️ Integrated analysis failed - see logs for details" >> review-comment.md
+          fi
+          
           set -e  # Re-enable exit on error
             
       - name: Post PR Comment

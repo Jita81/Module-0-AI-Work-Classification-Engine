@@ -148,6 +148,75 @@ def create_cli():
         except Exception as e:
             click.echo(f"❌ Error generating microservice: {e}")
             return 1
+
+    @cli.command()
+    @click.argument('target_path', default='.')
+    @click.option('--module-type', 
+                  type=click.Choice(['CORE', 'INTEGRATION', 'SUPPORTING', 'TECHNICAL']),
+                  help='Module type for framework validation')
+    @click.option('--format', 'output_format',
+                  type=click.Choice(['markdown', 'json', 'text']),
+                  default='markdown',
+                  help='Output format for quality report')
+    def quality_check(target_path, module_type, output_format):
+        """Run integrated quality analysis using AI Code Review + Framework Validation."""
+        try:
+            import asyncio
+            import sys
+            import os
+            
+            # Add src to Python path for imports
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+            
+            from quality_gates.integrated_quality_system import IntegratedQualitySystem
+            
+            async def run_analysis():
+                click.echo(f"🔍 Running integrated quality analysis on: {target_path}")
+                if module_type:
+                    click.echo(f"📋 Module type: {module_type}")
+                
+                quality_system = IntegratedQualitySystem()
+                report = await quality_system.run_comprehensive_analysis(target_path, module_type)
+                
+                # Display results
+                status = "✅ PASSED" if report.passed else "❌ FAILED"
+                click.echo(f"\n{status} Overall Score: {report.overall_score:.1f}/100")
+                
+                click.echo(f"\n📊 Quality Breakdown:")
+                click.echo(f"   🤖 AI Code Review: {report.ai_review.score or 'N/A'}/100")
+                click.echo(f"   🏗️  Framework Validation: {report.framework_validation.score or 'N/A'}/100")
+                
+                if report.ai_review.issues or report.framework_validation.issues:
+                    total_issues = len(report.ai_review.issues) + len(report.framework_validation.issues)
+                    click.echo(f"   ⚠️  Issues Found: {total_issues}")
+                
+                if report.recommendations:
+                    click.echo(f"   💡 Recommendations: {len(report.recommendations)}")
+                
+                # Generate and display full report
+                if output_format != 'text':
+                    click.echo(f"\n📋 Detailed Report ({output_format}):")
+                    click.echo("=" * 50)
+                    full_report = quality_system.generate_quality_report(report, output_format)
+                    click.echo(full_report)
+                
+                return 0 if report.passed else 1
+            
+            # Check if API key is available
+            if not os.getenv('ANTHROPIC_API_KEY'):
+                click.echo("⚠️  Warning: ANTHROPIC_API_KEY not set. AI Code Review will be limited.")
+                click.echo("   Set the API key with: export ANTHROPIC_API_KEY='your-key'")
+            
+            # Run async analysis
+            return asyncio.run(run_analysis())
+            
+        except ImportError as e:
+            click.echo(f"❌ Import error: {e}")
+            click.echo("   Make sure all dependencies are installed.")
+            return 1
+        except Exception as e:
+            click.echo(f"❌ Error running quality analysis: {e}")
+            return 1
     
     return cli
 

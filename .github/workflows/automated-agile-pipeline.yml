@@ -115,7 +115,7 @@ jobs:
 
   # Job 2: Code Quality and Review Integration
   code_quality_gate:
-    name: Automated Code Quality Gate
+    name: Integrated Quality Gate (AI Review + Framework Validation)
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     
@@ -134,15 +134,48 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install flake8 pylint black isort
+          pip install flake8 pylint black isort urllib3 requests
           
-      - name: Run Code Quality Checks
+      - name: Run Integrated Quality Analysis
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          echo "## Automated Code Quality Report" > quality_report.md
+          echo "## Integrated Quality Analysis Report" > quality_report.md
           echo "" >> quality_report.md
           echo "**Generated**: $(date)" >> quality_report.md
           echo "**Commit**: $GITHUB_SHA" >> quality_report.md
+          echo "**Tools**: [CODEREVIEW](https://github.com/Jita81/CODEREVIEW) + [CODETEST](https://github.com/Jita81/CODETEST)" >> quality_report.md
           echo "" >> quality_report.md
+          
+          # Detect module type
+          MODULE_TYPE="CORE"
+          if [ -d "src/integration" ] || grep -q "integration" README.md 2>/dev/null; then
+            MODULE_TYPE="INTEGRATION"
+          elif [ -d "src/support" ] || grep -q "support" README.md 2>/dev/null; then
+            MODULE_TYPE="SUPPORTING"
+          elif [ -d "src/technical" ] || grep -q "technical" README.md 2>/dev/null; then
+            MODULE_TYPE="TECHNICAL"
+          fi
+          
+          echo "**Module Type**: $MODULE_TYPE" >> quality_report.md
+          echo "" >> quality_report.md
+          
+          # Run integrated quality system
+          if [ ! -z "$ANTHROPIC_API_KEY" ]; then
+            echo "🔍 Running AI Code Review + Framework Validation..."
+            
+            # Make quality gates executable
+            chmod +x src/core/quality_gates/codetest_integration.sh
+            
+            # Run integrated analysis
+            python src/core/quality_gates/integrated_quality_system.py . $MODULE_TYPE >> quality_report.md 2>&1 || {
+              echo "⚠️ Integrated analysis failed, running fallback checks..." >> quality_report.md
+              echo "" >> quality_report.md
+            }
+          else
+            echo "⚠️ ANTHROPIC_API_KEY not set, running basic quality checks only" >> quality_report.md
+            echo "" >> quality_report.md
+          fi
           
           # Black formatting check
           echo "### Code Formatting (Black)" >> quality_report.md
