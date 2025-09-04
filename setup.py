@@ -33,10 +33,10 @@ dev_requirements = [
 
 setup(
     name="standardized-modules-framework",
-    version="1.1.0",
+    version="2.0.0",
     author="Standardized Modules Framework",
     author_email="contact@standardized-modules.dev",
-    description="AI-optimized module scaffolding framework for rapid development",
+    description="AI-discoverable MCP server framework - Generate autonomous modules that AI agents can find and integrate automatically",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/standardized-modules/framework",

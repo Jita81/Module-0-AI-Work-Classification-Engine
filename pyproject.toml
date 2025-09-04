@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "standardized-modules-framework"
-version = "1.1.0"
-description = "AI-optimized module scaffolding framework for rapid development"
+version = "2.0.0"
+description = "AI-discoverable MCP server framework - Generate autonomous modules that AI agents can find and integrate automatically"
 authors = [
     {name = "Standardized Modules Framework", email = "contact@standardized-modules.dev"}
 ]
@@ -25,7 +25,7 @@ classifiers = [
     "Topic :: Software Development :: Code Generators",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-keywords = ["scaffolding", "framework", "ai", "automation", "modules", "development"]
+keywords = ["mcp", "ai-discoverable", "json-rpc", "microservices", "ai-integration", "model-context-protocol", "autonomous", "self-describing"]
 
 dependencies = [
     "click>=8.0.0",
