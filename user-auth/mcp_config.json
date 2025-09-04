@@ -1,0 +1,48 @@
+{
+  "mcp_server": {
+    "name": "user-auth",
+    "version": "1.0.0",
+    "type": "CORE",
+    "domain": "authentication",
+    "protocol_version": "2024-11-05"
+  },
+  "transport": {
+    "type": "stdio",
+    "options": {
+      "buffer_size": 8192,
+      "timeout": 30
+    }
+  },
+  "capabilities": {
+    "tools": {
+      "enabled": true,
+      "max_concurrent": 10
+    },
+    "resources": {
+      "enabled": true,
+      "cache_ttl": 300
+    },
+    "prompts": {
+      "enabled": true,
+      "template_cache": true
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": "user-auth_mcp.log"
+  },
+  "performance": {
+    "max_request_size": "10MB",
+    "request_timeout": 30,
+    "rate_limit": {
+      "enabled": true,
+      "requests_per_minute": 100
+    }
+  },
+  "ai_integration": {
+    "auto_discovery": true,
+    "schema_validation": true,
+    "completion_hints": true
+  }
+}

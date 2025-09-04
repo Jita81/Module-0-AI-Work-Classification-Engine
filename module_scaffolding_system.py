@@ -15,6 +15,12 @@ from pathlib import Path
 from typing import Dict, Any
 import json
 
+# Import MCP generator
+try:
+    from src.core.generators.mcp_generator import MCPServerGenerator
+except ImportError:
+    MCPServerGenerator = None
+
 try:
     from jinja2 import Template
 except ImportError:
@@ -45,25 +51,50 @@ def create_cli():
     @click.option('--deployment-target', default='kubernetes', 
                   type=click.Choice(['kubernetes', 'docker-compose', 'lambda']),
                   help='Deployment target platform')
+    @click.option('--mcp-server', is_flag=True, default=True, help='Generate as MCP server (default: True)')
     def create_module(module_name: str, module_type: str, domain: str, output_dir: str, 
-                     ai_ready: bool, with_docker: bool, deployment_target: str):
+                     ai_ready: bool, with_docker: bool, deployment_target: str, mcp_server: bool):
         """Create a new standardized module with complete framework structure"""
         
-        generator = ModuleGenerator()
-        result = generator.generate_module(
-            name=module_name,
-            module_type=module_type,
-            domain=domain,
-            output_dir=output_dir,
-            ai_ready=ai_ready,
-            with_docker=with_docker,
-            deployment_target=deployment_target
-                )
+        # Choose generator based on MCP server flag
+        if mcp_server and MCPServerGenerator:
+            generator = MCPServerGenerator()
+            result = generator.generate_mcp_server(
+                name=module_name,
+                module_type=module_type,
+                domain=domain,
+                output_dir=output_dir,
+                ai_ready=ai_ready,
+                with_docker=with_docker,
+                deployment_target=deployment_target
+            )
+        else:
+            generator = ModuleGenerator()
+            result = generator.generate_module(
+                name=module_name,
+                module_type=module_type,
+                domain=domain,
+                output_dir=output_dir,
+                ai_ready=ai_ready,
+                with_docker=with_docker,
+                deployment_target=deployment_target
+            )
         
         if result.success:
-            click.echo(f"✅ Module '{module_name}' created successfully!")
+            if mcp_server:
+                click.echo(f"✅ MCP Server '{module_name}' created successfully!")
+                click.echo(f"🔌 Type: {module_type} MCP Server")
+                click.echo(f"🌐 Domain: {domain}")
+            else:
+                click.echo(f"✅ Module '{module_name}' created successfully!")
+            
             click.echo(f"📁 Location: {result.module_path}")
             click.echo(f"🤖 AI completion file: {result.ai_completion_file}")
+            
+            if mcp_server:
+                click.echo(f"📡 MCP Protocol: JSON-RPC 2.0")
+                click.echo(f"🔍 AI-Discoverable: Yes")
+                click.echo(f"🛠️  Self-Describing API: Yes")
             
             if with_docker:
                 click.echo(f"🐳 Containerized for: {deployment_target}")
@@ -72,15 +103,83 @@ def create_cli():
                 click.echo(f"🚀 CI/CD pipeline configured")
                 
             click.echo("\nNext steps:")
-            click.echo("1. Open the AI completion file in Cursor")
-            click.echo("2. Use the provided prompts to complete the module")
+            if mcp_server:
+                click.echo("1. Open the AI completion file in Cursor")
+                click.echo("2. Implement business logic using MCP-optimized prompts")
+                click.echo(f"3. Test MCP server: python3 {module_name}_server.py")
+                click.echo("4. Test AI integration with MCP client")
+            else:
+                click.echo("1. Open the AI completion file in Cursor")
+                click.echo("2. Use the provided prompts to complete the module")
             
             if with_docker:
-                click.echo("3. Build and test: ./scripts/build.sh")
-                click.echo("4. Start locally: docker-compose up")
-                click.echo("5. Deploy: ./scripts/deploy.sh staging")
+                click.echo("5. Build and test: ./scripts/build.sh")
+                click.echo("6. Start locally: docker-compose up")
+                click.echo("7. Deploy: ./scripts/deploy.sh staging")
             else:
-                click.echo("3. Run tests: pytest {}/tests/".format(result.module_path))
+                click.echo("5. Run tests: pytest {}/tests/".format(result.module_path))
+        else:
+            click.echo(f"❌ Error: {result.error}")
+    
+    @cli.command()
+    @click.argument('server_name')
+    @click.option('--type', 'module_type', 
+                  type=click.Choice(['CORE', 'INTEGRATION', 'SUPPORTING', 'TECHNICAL']),
+                  required=True, help='Type of MCP server to create')
+    @click.option('--domain', default='general', help='Business domain (e.g., ecommerce, finance)')
+    @click.option('--output-dir', default='.', help='Output directory')
+    @click.option('--with-docker', is_flag=True, help='Generate Docker and Kubernetes files')
+    @click.option('--deployment-target', default='kubernetes', 
+                  type=click.Choice(['kubernetes', 'docker-compose', 'lambda']),
+                  help='Deployment target platform')
+    def create_mcp_server(server_name: str, module_type: str, domain: str, output_dir: str,
+                         with_docker: bool, deployment_target: str):
+        """Create a new MCP (Model Context Protocol) server for AI integration"""
+        
+        if not MCPServerGenerator:
+            click.echo("❌ Error: MCP generator not available. Check installation.")
+            return
+        
+        generator = MCPServerGenerator()
+        result = generator.generate_mcp_server(
+            name=server_name,
+            module_type=module_type,
+            domain=domain,
+            output_dir=output_dir,
+            ai_ready=True,  # Always AI-ready for MCP servers
+            with_docker=with_docker,
+            deployment_target=deployment_target
+        )
+        
+        if result.success:
+            click.echo(f"🚀 MCP Server '{server_name}' created successfully!")
+            click.echo(f"🔌 Type: {module_type} MCP Server")
+            click.echo(f"🌐 Domain: {domain}")
+            click.echo(f"📁 Location: {result.module_path}")
+            click.echo(f"🤖 AI completion file: {result.ai_completion_file}")
+            click.echo(f"📡 Protocol: MCP JSON-RPC 2.0")
+            click.echo(f"🔍 AI-Discoverable: ✅ Yes")
+            click.echo(f"🛠️  Self-Describing API: ✅ Yes")
+            
+            if with_docker:
+                click.echo(f"🐳 Containerized for: {deployment_target}")
+                click.echo(f"📦 Docker files generated")
+                click.echo(f"☸️  Kubernetes manifests generated")
+                
+            click.echo("\n🎯 Next Steps:")
+            click.echo("1. Open AI completion file for guided implementation")
+            click.echo(f"2. Test MCP server: python3 {server_name}_server.py")
+            click.echo("3. Test AI discovery with MCP client")
+            click.echo("4. Implement business logic using provided templates")
+            
+            if with_docker:
+                click.echo("5. Build container: docker build -t {}-mcp-server .".format(server_name))
+                click.echo("6. Start locally: docker-compose up")
+                click.echo("7. Deploy to cloud: ./scripts/deploy.sh")
+            
+            click.echo("\n🤖 AI Integration Ready!")
+            click.echo("Your MCP server can now be discovered and integrated by AI agents automatically.")
+            
         else:
             click.echo(f"❌ Error: {result.error}")
     
