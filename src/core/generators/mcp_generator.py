@@ -10,7 +10,11 @@ import json
 from pathlib import Path
 from typing import Dict, Any
 
-from ..models.generation_result import GenerationResult
+# Import GenerationResult from main module
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent.parent))
+from module_scaffolding_system import GenerationResult
 from .mcp_templates import MCPServerTemplates
 
 
