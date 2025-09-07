@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-work-classification-engine-config
+data:
+  LOG_LEVEL: "INFO"
+  ENVIRONMENT: "production"
+  # Add module-specific configuration here

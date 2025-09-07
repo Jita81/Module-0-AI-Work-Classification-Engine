@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-work-classification-engine
+  labels:
+    app: ai-work-classification-engine
+spec:
+  selector:
+    app: ai-work-classification-engine
+  ports:
+  - port: 80
+    targetPort: 8000
+    name: http
+  type: ClusterIP
