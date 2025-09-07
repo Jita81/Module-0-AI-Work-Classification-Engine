@@ -1,0 +1,984 @@
+---
+alwaysApply: true
+---
+# Module 0: AI Work Classification Engine
+## Complete Requirements Document & Technical Design
+
+**Framework:** Standardized Modules Framework v1.0.0  
+**Module Version:** AA 1.2 Module 0 MVP v1.0.0  
+**Document Type:** Requirements & Technical Specification  
+**Target Release:** 2-Week Sprint  
+**Build Method:** TDD with Agent Cycles
+
+---
+
+## 1. Module Specification
+
+### 1.1 Module Identity
+- **Module Name:** AI Work Classification Engine with Learning
+- **Module ID:** AA12-M0-CLASSIFY
+- **Module Type:** Core AI Service
+- **Domain:** Adaptive Work Analysis & Learning
+- **Criticality Level:** High (Foundation for AA 1.2 Framework)
+- **Dependencies:** Claude Sonnet 4 API, FastAPI, React
+
+### 1.2 Purpose Statement
+Intelligent work classification system that uses Claude Sonnet 4 to analyze any work item (user story to enterprise initiative) and classify by Size, Complexity, and Type. The system learns from user feedback and automatically improves its configuration over time.
+
+### 1.3 Business Value
+- **Immediate:** Consistent work estimation and planning across teams
+- **Short-term:** Reduced estimation meetings and faster project initiation
+- **Long-term:** Self-improving system that becomes more accurate with usage
+
+---
+
+## 2. Functional Requirements
+
+### 2.1 Core Capabilities
+
+#### FR-001: AI-Powered Classification
+**Priority:** MUST HAVE  
+**User Story:** As a team member, I want to input any work description and receive intelligent classification so I can quickly understand scope and plan accordingly.
+
+**Acceptance Criteria:**
+- [ ] Accept any text input (10-5000 characters)
+- [ ] Return structured classification: Size (XS-XXL), Complexity (Low-Critical), Type (Feature/Bug/etc.)
+- [ ] Include confidence scores (0-100%) for each dimension
+- [ ] Provide reasoning for each classification decision
+- [ ] Response time under 5 seconds
+- [ ] Handle API failures gracefully with fallback classifications
+
+#### FR-002: Interactive Configuration Management
+**Priority:** MUST HAVE  
+**User Story:** As a system administrator, I want to view and modify classification standards so I can adapt the system to our organization's needs.
+
+**Acceptance Criteria:**
+- [ ] Web interface to view current configuration (prompts + standards)
+- [ ] Inline editing of classification criteria and examples
+- [ ] Real-time testing of configuration changes
+- [ ] Save/discard configuration modifications
+- [ ] Version control for all configuration changes
+- [ ] Rollback to previous configuration versions
+
+#### FR-003: Feedback Collection & Learning
+**Priority:** MUST HAVE  
+**User Story:** As a user, I want to provide feedback on classifications so the system improves over time.
+
+**Acceptance Criteria:**
+- [ ] Three feedback options: Accept, Edit, Reject & Rerun
+- [ ] Accept: Store as positive example, no immediate config change
+- [ ] Edit: Allow user to modify results, capture corrections
+- [ ] Reject: Provide context, rerun classification with improvements
+- [ ] Store all feedback with timestamp and user context
+- [ ] Visual feedback confirmation and status
+
+#### FR-004: Automatic Configuration Learning
+**Priority:** MUST HAVE  
+**User Story:** As a system administrator, I want the system to automatically improve based on user feedback so classification accuracy increases over time.
+
+**Acceptance Criteria:**
+- [ ] Analyze feedback patterns every 10 interactions
+- [ ] Detect systematic correction patterns (>50% correction rate for similar work)
+- [ ] Generate updated configuration incorporating correction patterns
+- [ ] Create new configuration version with change log
+- [ ] Notify users of automatic updates with explanation
+- [ ] Maintain success rate metrics and trends
+
+### 2.2 Supporting Capabilities
+
+#### FR-005: Pattern Library Management
+**Priority:** SHOULD HAVE  
+**User Story:** As a system, I want to maintain a library of successful classification patterns so I can provide better context for future classifications.
+
+**Acceptance Criteria:**
+- [ ] Store accepted classifications as positive examples
+- [ ] Organize patterns by work characteristics
+- [ ] Include successful patterns in prompts for similar work
+- [ ] Export pattern library for analysis
+- [ ] Pattern discovery and similarity matching
+
+#### FR-006: Analytics & Reporting
+**Priority:** SHOULD HAVE  
+**User Story:** As a system administrator, I want to view classification analytics so I can understand system performance and improvement trends.
+
+**Acceptance Criteria:**
+- [ ] Classification accuracy metrics by category
+- [ ] User feedback trends (accept/edit/reject rates)
+- [ ] Configuration update history and impact
+- [ ] Most common correction patterns
+- [ ] System usage statistics
+
+---
+
+## 3. Technical Architecture
+
+### 3.1 System Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React Web    │    │   FastAPI       │    │   Claude API    │
+│   Interface     │◄──►│   Backend       │◄──►│   Integration   │
+│                 │    │                 │    │                 │
+│ - Config UI     │    │ - Classification│    │ - Sonnet 4      │
+│ - Test Interface│    │ - Learning      │    │ - Structured    │
+│ - Feedback UI   │    │ - Config Mgmt   │    │   Prompts       │
+│ - Analytics     │    │ - Feedback      │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │
+                       ┌─────────────────┐
+                       │   File System   │
+                       │                 │
+                       │ - config/*.json │
+                       │ - data/*.json   │
+                       │ - patterns/     │
+                       │ - versions/     │
+                       └─────────────────┘
+```
+
+### 3.2 Data Architecture
+
+#### Configuration Structure
+```
+project/
+├── config/
+│   ├── prompts.json          # AI prompts and API config
+│   ├── standards.json        # Classification criteria
+│   └── versions/             # Historical configurations
+│       ├── v1.0.0.json
+│       └── v1.0.1.json
+├── data/
+│   ├── feedback.json         # User feedback storage
+│   ├── patterns.json         # Success patterns
+│   └── analytics.json        # Usage metrics
+└── src/
+    ├── backend/              # FastAPI application
+    ├── frontend/             # React application
+    └── tests/                # Test suites
+```
+
+### 3.3 API Design
+
+#### Classification Endpoint
+```typescript
+POST /api/classify
+{
+  "work_description": string,
+  "context": {
+    "user_id": string,
+    "project_context": string?
+  }
+}
+
+Response:
+{
+  "classification": {
+    "size": {"value": "M", "confidence": 85, "reasoning": "..."},
+    "complexity": {"value": "Medium", "confidence": 70, "reasoning": "..."},
+    "type": {"value": "Feature", "confidence": 90, "reasoning": "..."}
+  },
+  "estimated_effort": "1-2 weeks",
+  "recommended_approach": "Standard development process",
+  "classification_id": "uuid"
+}
+```
+
+#### Feedback Endpoint
+```typescript
+POST /api/feedback
+{
+  "classification_id": string,
+  "feedback_type": "accept" | "edit" | "reject",
+  "corrections": {
+    "size": {"value": "L", "reasoning": "..."} // only if edit
+  },
+  "additional_context": string? // only if reject
+}
+
+Response:
+{
+  "status": "recorded",
+  "triggered_learning": boolean,
+  "new_config_version": string?
+}
+```
+
+---
+
+## 4. Implementation Specification
+
+### 4.1 Backend Architecture (FastAPI)
+
+#### Core Services
+```python
+# services/classification_service.py
+class ClassificationService:
+    def __init__(self):
+        self.claude_client = ClaudeClient()
+        self.config_manager = ConfigManager()
+        self.pattern_library = PatternLibrary()
+    
+    async def classify(self, work_description: str, context: dict) -> dict:
+        # Build prompt with current config + relevant patterns
+        # Call Claude API
+        # Parse and validate response
+        # Store classification for learning
+        
+# services/learning_service.py  
+class LearningService:
+    def __init__(self):
+        self.feedback_store = FeedbackStore()
+        self.pattern_detector = PatternDetector()
+        self.config_generator = ConfigGenerator()
+    
+    def process_feedback(self, feedback: dict):
+        # Store feedback
+        # Check if learning trigger conditions met
+        # If yes, analyze patterns and update config
+        
+    def analyze_patterns(self) -> dict:
+        # Group feedback by work characteristics
+        # Detect correction patterns
+        # Calculate confidence in patterns
+        
+# services/config_manager.py
+class ConfigManager:
+    def load_config(self) -> dict:
+        # Load current prompts and standards
+        
+    def update_config(self, updates: dict) -> str:
+        # Create new version
+        # Save updated config
+        # Return version number
+        
+    def rollback_config(self, version: str):
+        # Restore previous configuration version
+```
+
+#### API Routes
+```python
+# api/routes.py
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class ClassificationRequest(BaseModel):
+    work_description: str
+    context: dict = {}
+
+class FeedbackRequest(BaseModel):
+    classification_id: str
+    feedback_type: str
+    corrections: dict = {}
+    additional_context: str = ""
+
+@app.post("/api/classify")
+async def classify_work(request: ClassificationRequest):
+    # Validate input
+    # Call classification service
+    # Return structured response
+
+@app.post("/api/feedback")
+async def record_feedback(request: FeedbackRequest):
+    # Validate feedback
+    # Process through learning service
+    # Return status and any updates
+
+@app.get("/api/config")
+async def get_configuration():
+    # Return current configuration
+
+@app.put("/api/config")
+async def update_configuration(config: dict):
+    # Validate and update configuration
+```
+
+### 4.2 Frontend Architecture (React)
+
+#### Component Structure
+```typescript
+// components/ClassificationTester.tsx
+export const ClassificationTester: React.FC = () => {
+  const [workDescription, setWorkDescription] = useState('')
+  const [classification, setClassification] = useState(null)
+  const [feedback, setFeedback] = useState('')
+  
+  const handleClassify = async () => {
+    // Call classification API
+    // Display results
+  }
+  
+  const handleFeedback = async (type: string, corrections?: any) => {
+    // Submit feedback
+    // Update UI based on response
+  }
+  
+  return (
+    // Input form + Results display + Feedback buttons
+  )
+}
+
+// components/ConfigurationManager.tsx
+export const ConfigurationManager: React.FC = () => {
+  const [config, setConfig] = useState(null)
+  const [editing, setEditing] = useState(false)
+  
+  const handleConfigUpdate = async (updates: any) => {
+    // Save configuration changes
+    // Refresh display
+  }
+  
+  return (
+    // Configuration viewer/editor
+  )
+}
+
+// components/AnalyticsDashboard.tsx
+export const AnalyticsDashboard: React.FC = () => {
+  const [metrics, setMetrics] = useState(null)
+  
+  useEffect(() => {
+    // Load analytics data
+  }, [])
+  
+  return (
+    // Charts and metrics display
+  )
+}
+```
+
+---
+
+## 5. Test-Driven Development Breakdown
+
+### 5.1 Test Categories
+
+#### Unit Tests (85+ tests)
+**Backend Services:**
+- `test_classification_service.py` (25 tests)
+- `test_learning_service.py` (20 tests)
+- `test_config_manager.py` (15 tests)
+- `test_pattern_detector.py` (15 tests)
+- `test_claude_client.py` (10 tests)
+
+**Frontend Components:**
+- `ClassificationTester.test.tsx` (15 tests)
+- `ConfigurationManager.test.tsx` (12 tests)
+- `AnalyticsDashboard.test.tsx` (8 tests)
+
+#### Integration Tests (25+ tests)
+- `test_api_endpoints.py` (15 tests)
+- `test_end_to_end_flows.py` (10 tests)
+
+### 5.2 TDD Implementation Order
+
+#### Phase 1: Core Classification (Days 1-3)
+**TDD Cycle 1: Claude API Integration**
+```python
+# tests/test_claude_client.py
+
+def test_claude_client_initialization():
+    """Test Claude client initializes with correct config"""
+    client = ClaudeClient()
+    assert client.model == "claude-sonnet-4-20250514"
+    assert client.max_tokens == 1000
+
+def test_classification_prompt_building():
+    """Test prompt construction with work description and standards"""
+    service = ClassificationService()
+    prompt = service.build_prompt("Add user login feature")
+    assert "Add user login feature" in prompt
+    assert "classification standards" in prompt.lower()
+
+def test_claude_api_call_success():
+    """Test successful API call returns structured response"""
+    # Mock Claude API response
+    mock_response = {
+        "size": {"value": "M", "confidence": 85},
+        "complexity": {"value": "Medium", "confidence": 70},
+        "type": {"value": "Feature", "confidence": 90}
+    }
+    
+    service = ClassificationService()
+    result = await service.classify("Add user login")
+    assert result["size"]["value"] in ["XS", "S", "M", "L", "XL", "XXL"]
+    assert 0 <= result["size"]["confidence"] <= 100
+
+def test_claude_api_call_failure_handling():
+    """Test graceful handling of API failures"""
+    # Mock API failure
+    service = ClassificationService()
+    result = await service.classify("test", mock_api_failure=True)
+    assert result["status"] == "fallback"
+    assert "error" in result
+```
+
+**Implementation:** Build Claude client, classification service, API integration
+
+**TDD Cycle 2: Configuration Management**
+```python
+# tests/test_config_manager.py
+
+def test_config_loading():
+    """Test loading configuration from JSON files"""
+    config_manager = ConfigManager()
+    config = config_manager.load_config()
+    assert "prompts" in config
+    assert "standards" in config
+    assert "size_standards" in config["standards"]
+
+def test_config_validation():
+    """Test configuration validation"""
+    invalid_config = {"invalid": "structure"}
+    config_manager = ConfigManager()
+    with pytest.raises(ValidationError):
+        config_manager.validate_config(invalid_config)
+
+def test_config_versioning():
+    """Test configuration version creation"""
+    config_manager = ConfigManager()
+    old_version = config_manager.get_current_version()
+    new_config = {"updated": "standards"}
+    new_version = config_manager.update_config(new_config)
+    assert new_version != old_version
+    assert config_manager.version_exists(new_version)
+
+def test_config_rollback():
+    """Test rolling back to previous configuration"""
+    config_manager = ConfigManager()
+    current_config = config_manager.load_config()
+    # Update config
+    config_manager.update_config({"test": "update"})
+    # Rollback
+    config_manager.rollback_to_previous()
+    rolled_back_config = config_manager.load_config()
+    assert rolled_back_config == current_config
+```
+
+**Implementation:** Build configuration management system, JSON handlers, versioning
+
+#### Phase 2: Learning System (Days 4-6)
+**TDD Cycle 3: Feedback Collection**
+```python
+# tests/test_feedback_collection.py
+
+def test_feedback_storage():
+    """Test storing feedback with proper structure"""
+    feedback_store = FeedbackStore()
+    feedback = {
+        "classification_id": "test-123",
+        "feedback_type": "edit",
+        "corrections": {"size": {"value": "L", "reasoning": "More complex than estimated"}}
+    }
+    feedback_store.store(feedback)
+    retrieved = feedback_store.get_by_id("test-123")
+    assert retrieved["feedback_type"] == "edit"
+
+def test_feedback_aggregation():
+    """Test aggregating feedback by patterns"""
+    feedback_store = FeedbackStore()
+    # Add multiple payment-related corrections
+    payment_feedbacks = [
+        {"input": "payment integration", "correction": {"size": "L"}},
+        {"input": "add payment processing", "correction": {"size": "L"}},
+        {"input": "payment gateway setup", "correction": {"size": "L"}}
+    ]
+    for fb in payment_feedbacks:
+        feedback_store.store(fb)
+    
+    patterns = feedback_store.find_patterns()
+    assert "payment" in patterns
+    assert patterns["payment"]["size_corrections"] >= 3
+
+def test_learning_trigger_conditions():
+    """Test when learning should be triggered"""
+    learning_service = LearningService()
+    # Add 10 similar corrections
+    for i in range(10):
+        learning_service.add_feedback({
+            "input": f"payment task {i}",
+            "correction": {"complexity": "High"}
+        })
+    
+    should_learn = learning_service.should_trigger_learning()
+    assert should_learn == True
+```
+
+**Implementation:** Build feedback storage, pattern detection, learning triggers
+
+**TDD Cycle 4: Pattern Detection & Config Updates**
+```python
+# tests/test_pattern_detection.py
+
+def test_pattern_detection():
+    """Test detecting systematic correction patterns"""
+    pattern_detector = PatternDetector()
+    feedbacks = [
+        {"input": "api integration", "original": {"complexity": "Medium"}, "corrected": {"complexity": "High"}},
+        {"input": "rest api setup", "original": {"complexity": "Medium"}, "corrected": {"complexity": "High"}},
+        {"input": "api endpoint creation", "original": {"complexity": "Medium"}, "corrected": {"complexity": "High"}}
+    ]
+    
+    patterns = pattern_detector.analyze(feedbacks)
+    assert patterns["api_work"]["complexity_pattern"] == "Medium -> High"
+    assert patterns["api_work"]["confidence"] >= 0.8
+
+def test_config_generation():
+    """Test generating updated configuration from patterns"""
+    config_generator = ConfigGenerator()
+    patterns = {
+        "api_work": {
+            "complexity_pattern": "Medium -> High",
+            "frequency": 8,
+            "confidence": 0.9
+        }
+    }
+    
+    updated_config = config_generator.update_standards(patterns)
+    api_examples = updated_config["standards"]["complexity_standards"]["High"]["examples"]
+    assert any("api" in example.lower() for example in api_examples)
+
+def test_config_update_application():
+    """Test applying configuration updates"""
+    learning_service = LearningService()
+    original_config = learning_service.config_manager.load_config()
+    
+    learning_service.apply_learning_patterns()
+    updated_config = learning_service.config_manager.load_config()
+    
+    assert updated_config["version"] != original_config["version"]
+```
+
+**Implementation:** Build pattern detection algorithms, configuration generation, update application
+
+#### Phase 3: User Interface (Days 7-10)
+**TDD Cycle 5: Classification Interface**
+```typescript
+// tests/ClassificationTester.test.tsx
+
+describe('ClassificationTester Component', () => {
+  test('renders input form and classify button', () => {
+    render(<ClassificationTester />);
+    expect(screen.getByLabelText(/work description/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /classify/i })).toBeInTheDocument();
+  });
+
+  test('displays classification results after API call', async () => {
+    const mockClassification = {
+      size: { value: 'M', confidence: 85, reasoning: 'Medium-sized feature' },
+      complexity: { value: 'Medium', confidence: 70, reasoning: 'Some integration required' },
+      type: { value: 'Feature', confidence: 90, reasoning: 'New functionality' }
+    };
+    
+    // Mock API call
+    jest.spyOn(api, 'classify').mockResolvedValue(mockClassification);
+    
+    render(<ClassificationTester />);
+    fireEvent.change(screen.getByLabelText(/work description/i), {
+      target: { value: 'Add user authentication' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /classify/i }));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Size: M (85%)')).toBeInTheDocument();
+      expect(screen.getByText('Complexity: Medium (70%)')).toBeInTheDocument();
+    });
+  });
+
+  test('handles feedback submission correctly', async () => {
+    const mockFeedback = jest.spyOn(api, 'submitFeedback').mockResolvedValue({ status: 'recorded' });
+    
+    render(<ClassificationTester />);
+    // ... set up classification result state
+    
+    fireEvent.click(screen.getByRole('button', { name: /accept/i }));
+    
+    await waitFor(() => {
+      expect(mockFeedback).toHaveBeenCalledWith({
+        classification_id: expect.any(String),
+        feedback_type: 'accept'
+      });
+    });
+  });
+});
+```
+
+**Implementation:** Build React components, API integration, user interactions
+
+**TDD Cycle 6: Configuration Interface**
+```typescript
+// tests/ConfigurationManager.test.tsx
+
+describe('ConfigurationManager Component', () => {
+  test('displays current configuration', () => {
+    const mockConfig = {
+      standards: {
+        size_standards: {
+          M: { description: 'Medium-sized work', effort_range: '1-2 weeks' }
+        }
+      }
+    };
+    
+    render(<ConfigurationManager config={mockConfig} />);
+    expect(screen.getByText('Medium-sized work')).toBeInTheDocument();
+    expect(screen.getByText('1-2 weeks')).toBeInTheDocument();
+  });
+
+  test('enables inline editing of standards', async () => {
+    render(<ConfigurationManager />);
+    
+    fireEvent.click(screen.getByRole('button', { name: /edit/i }));
+    
+    const descriptionField = screen.getByDisplayValue(/medium-sized work/i);
+    fireEvent.change(descriptionField, {
+      target: { value: 'Updated description for medium work' }
+    });
+    
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Updated description for medium work')).toBeInTheDocument();
+    });
+  });
+
+  test('handles configuration testing', async () => {
+    const mockClassify = jest.spyOn(api, 'classify').mockResolvedValue({
+      size: { value: 'L', confidence: 90 }
+    });
+    
+    render(<ConfigurationManager />);
+    
+    fireEvent.change(screen.getByLabelText(/test input/i), {
+      target: { value: 'Test work description' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /test config/i }));
+    
+    await waitFor(() => {
+      expect(mockClassify).toHaveBeenCalledWith('Test work description');
+    });
+  });
+});
+```
+
+**Implementation:** Build configuration interface, editing capabilities, testing features
+
+#### Phase 4: Integration & Analytics (Days 11-14)
+**TDD Cycle 7: End-to-End Workflows**
+```python
+# tests/test_e2e_workflows.py
+
+def test_complete_classification_workflow():
+    """Test full workflow from classification to feedback to learning"""
+    # Step 1: Classify work
+    response = client.post("/api/classify", json={
+        "work_description": "Implement payment processing with fraud detection",
+        "context": {"user_id": "test-user"}
+    })
+    assert response.status_code == 200
+    classification_id = response.json()["classification_id"]
+    
+    # Step 2: Provide feedback
+    feedback_response = client.post("/api/feedback", json={
+        "classification_id": classification_id,
+        "feedback_type": "edit",
+        "corrections": {
+            "complexity": {"value": "High", "reasoning": "Fraud detection adds significant complexity"}
+        }
+    })
+    assert feedback_response.status_code == 200
+    
+    # Step 3: Verify learning (after enough feedback)
+    # Simulate multiple similar corrections
+    for i in range(10):
+        # ... add similar payment complexity corrections
+    
+    # Trigger learning analysis
+    learning_response = client.post("/api/trigger-learning")
+    assert learning_response.json()["patterns_detected"] > 0
+
+def test_configuration_update_workflow():
+    """Test configuration update and rollback"""
+    # Get current config
+    config_response = client.get("/api/config")
+    original_config = config_response.json()
+    
+    # Update configuration
+    updated_standards = original_config.copy()
+    updated_standards["standards"]["size_standards"]["M"]["effort_range"] = "2-3 weeks"
+    
+    update_response = client.put("/api/config", json=updated_standards)
+    assert update_response.status_code == 200
+    new_version = update_response.json()["version"]
+    
+    # Verify update applied
+    verify_response = client.get("/api/config")
+    assert verify_response.json()["standards"]["size_standards"]["M"]["effort_range"] == "2-3 weeks"
+    
+    # Test rollback
+    rollback_response = client.post(f"/api/config/rollback/{new_version}")
+    assert rollback_response.status_code == 200
+```
+
+**Implementation:** API endpoints, full integration, error handling
+
+**TDD Cycle 8: Analytics & Monitoring**
+```python
+# tests/test_analytics.py
+
+def test_classification_metrics():
+    """Test tracking and reporting classification metrics"""
+    analytics = AnalyticsService()
+    
+    # Simulate classifications and feedback
+    for i in range(100):
+        analytics.record_classification({
+            "size": "M", "complexity": "Medium", "type": "Feature"
+        })
+        if i % 3 == 0:  # 33% feedback rate
+            analytics.record_feedback({
+                "feedback_type": "accept" if i % 2 == 0 else "edit"
+            })
+    
+    metrics = analytics.get_metrics()
+    assert metrics["total_classifications"] == 100
+    assert metrics["feedback_rate"] == 0.33
+    assert metrics["acceptance_rate"] > 0
+
+def test_improvement_tracking():
+    """Test tracking system improvement over time"""
+    analytics = AnalyticsService()
+    
+    # Week 1: Lower accuracy
+    analytics.record_period_metrics("week_1", {
+        "accuracy": 0.70,
+        "confidence": 0.65,
+        "user_satisfaction": 3.2
+    })
+    
+    # Week 4: Improved accuracy
+    analytics.record_period_metrics("week_4", {
+        "accuracy": 0.85,
+        "confidence": 0.80,
+        "user_satisfaction": 4.1
+    })
+    
+    improvement = analytics.calculate_improvement("week_1", "week_4")
+    assert improvement["accuracy_delta"] > 0.1
+    assert improvement["trend"] == "improving"
+```
+
+**Implementation:** Analytics collection, metrics calculation, improvement tracking
+
+---
+
+## 6. Configuration Examples
+
+### 6.1 Initial Prompts Configuration
+```json
+{
+  "version": "1.0.0",
+  "classification_prompt": {
+    "system_message": "You are an expert work classification system. Analyze work descriptions and classify them precisely according to the provided standards. Always respond with valid JSON in the exact format specified.",
+    "user_prompt_template": "Classify this work item:\n\n\"{work_description}\"\n\nUsing these standards:\n{classification_standards}\n\nConsider these successful examples:\n{relevant_patterns}\n\nRespond with valid JSON in this exact format:\n{output_format}",
+    "output_format": {
+      "size": {"value": "XS|S|M|L|XL|XXL", "confidence": "0-100", "reasoning": "brief explanation"},
+      "complexity": {"value": "Low|Medium|High|Critical", "confidence": "0-100", "reasoning": "brief explanation"},
+      "type": {"value": "Feature|Enhancement|Bug|Infrastructure|Migration|Research|Epic", "confidence": "0-100", "reasoning": "brief explanation"},
+      "estimated_effort": "human readable estimate",
+      "recommended_approach": "suggested process or framework"
+    }
+  },
+  "api_config": {
+    "model": "claude-sonnet-4-20250514",
+    "max_tokens": 1000,
+    "temperature": 0.1,
+    "timeout": 30
+  }
+}
+```
+
+### 6.2 Initial Standards Configuration
+```json
+{
+  "version": "1.0.0",
+  "last_updated": "2025-01-07T00:00:00Z",
+  "size_standards": {
+    "XS": {
+      "description": "Trivial changes requiring minimal effort",
+      "effort_range": "< 1 day",
+      "characteristics": ["Text changes", "Simple styling", "Config updates"],
+      "examples": ["Change button text", "Update copyright year", "Fix typo"]
+    },
+    "S": {
+      "description": "Small, well-defined changes",
+      "effort_range": "1-3 days",
+      "characteristics": ["Single component", "Minor additions", "Simple fixes"],
+      "examples": ["Add form validation", "New button variant", "Mobile fix"]
+    }
+  },
+  "complexity_standards": {
+    "Low": {
+      "description": "Well-understood work with established patterns",
+      "characteristics": ["Proven solutions", "Minimal unknowns", "Standard patterns"],
+      "examples": ["CRUD operations", "Standard forms", "Copy existing component"]
+    }
+  },
+  "type_standards": {
+    "Feature": {
+      "description": "New functionality or capabilities",
+      "examples": ["Add shopping cart", "User notifications", "Analytics dashboard"]
+    }
+  }
+}
+```
+
+---
+
+## 7. Deployment Specification
+
+### 7.1 Development Environment Setup
+```bash
+# Prerequisites
+node --version  # >= 18.0.0
+python --version  # >= 3.9.0
+git --version
+
+# Project setup
+git clone <repository-url>
+cd module-0-classification
+
+# Backend setup
+cd backend
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+pip install -r requirements.txt
+
+# Frontend setup
+cd ../frontend
+npm install
+
+# Environment variables
+cp .env.example .env
+# Configure CLAUDE_API_KEY and other variables
+
+# Database setup (if using)
+python manage.py migrate
+
+# Run tests
+cd ../backend && python -m pytest
+cd ../frontend && npm test
+
+# Start development servers
+cd backend && uvicorn main:app --reload --port 8000
+cd frontend && npm start  # Starts on port 3000
+```
+
+### 7.2 Production Deployment
+```dockerfile
+# Dockerfile.backend
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Dockerfile.frontend
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+### 7.3 Docker Compose
+```yaml
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+    volumes:
+      - ./config:/app/config
+      - ./data:/app/data
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+```
+
+---
+
+## 8. Success Criteria & Acceptance
+
+### 8.1 Technical Acceptance
+- [ ] All unit tests pass (85+ tests)
+- [ ] All integration tests pass (25+ tests)
+- [ ] API response time < 5 seconds for 95% of requests
+- [ ] System handles 100 concurrent users
+- [ ] Configuration updates apply without service restart
+- [ ] Learning system improves accuracy by 10% after 100 feedback items
+
+### 8.2 Functional Acceptance
+- [ ] Can classify diverse work items from user stories to enterprise initiatives
+- [ ] Users can modify configuration and see immediate results
+- [ ] Feedback collection works for all three types (Accept/Edit/Reject)
+- [ ] System automatically updates configuration based on patterns
+- [ ] Analytics show classification trends and improvement metrics
+- [ ] Configuration versioning and rollback works correctly
+
+### 8.3 User Acceptance
+- [ ] Interface is intuitive for non-technical users
+- [ ] Classification results are reasonable for test cases
+- [ ] Feedback process is smooth and encourages participation
+- [ ] Configuration changes are transparent and explainable
+- [ ] System demonstrates continuous improvement over time
+
+---
+
+## 9. Risk Mitigation
+
+### 9.1 Technical Risks
+- **Claude API Reliability:** Implement fallback classification, caching, retry logic
+- **Performance Bottlenecks:** Load testing, response caching, API optimization  
+- **Data Consistency:** Transaction handling, backup strategies, validation
+- **Security Concerns:** API key management, input sanitization, access control
+
+### 9.2 Implementation Risks
+- **Scope Creep:** Strict MVP focus, feature prioritization
+- **Integration Complexity:** Incremental integration, extensive testing
+- **Learning Algorithm Accuracy:** Conservative thresholds, manual oversight
+- **User Adoption:** Training materials, gradual rollout, feedback collection
+
+---
+
+## 10. Future Enhancements
+
+### 10.1 Post-MVP Features
+- **Advanced Analytics:** Predictive modeling, trend analysis, team comparisons
+- **Integration APIs:** JIRA, Trello, GitHub integration for automatic classification
+- **Multi-Model Support:** Support for other AI models beyond Claude
+- **Team Customization:** Organization-specific standards and patterns
+- **Bulk Classification:** Process multiple work items simultaneously
+
+### 10.2 Scaling Considerations
+- **Database Migration:** Move from JSON files to proper database
+- **Microservices:** Split classification, learning, and configuration services
+- **Caching Layer:** Redis for improved response times
+- **Monitoring:** APM tools, error tracking, performance metrics
+
+---
+
+**This document provides complete specifications for building a production-ready AI work classification system with learning capabilities using Test-Driven Development methodology.**
