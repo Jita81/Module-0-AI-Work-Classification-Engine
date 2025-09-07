@@ -20,10 +20,10 @@ import json
 import uuid
 from datetime import datetime
 import asyncio
-import aiohttp
+import anthropic
 
-from .interface import AiWorkClassificationEngineInterface
-from .types import (
+from interface import AiWorkClassificationEngineInterface
+from classification_types import (
     AiWorkClassificationEngineConfig,
     AiWorkClassificationEngineInput,
     AiWorkClassificationEngineOutput,
@@ -100,7 +100,7 @@ class AiWorkClassificationEngineModule(AiWorkClassificationEngineInterface):
             logger.error(f"Failed to initialize ai-work-classification-engine: {e}")
             return OperationResult.error(f"Initialization failed: {e}")
     
-    def execute_primary_operation(self, input_data: AiWorkClassificationEngineInput) -> OperationResult[AiWorkClassificationEngineOutput]:
+    async def execute_primary_operation(self, input_data: AiWorkClassificationEngineInput) -> OperationResult[AiWorkClassificationEngineOutput]:
         """
         AI_TODO: Implement main business operation
         
@@ -211,7 +211,9 @@ class AiWorkClassificationEngineModule(AiWorkClassificationEngineInterface):
             "type": "CORE",
             "status": "healthy" if self._initialized else "unhealthy",
             "business_rules_loaded": len(self._business_rules),
-            "domain_entities_count": len(self._domain_entities),
+            "classifications_count": len(self._classifications),
+            "feedback_count": len(self._feedback_store),
+            "patterns_count": len(self._patterns),
             "audit_events_count": len(self._audit_trail),
             "last_operation": self._audit_trail[-1] if self._audit_trail else None
         }
@@ -306,7 +308,7 @@ class AiWorkClassificationEngineModule(AiWorkClassificationEngineInterface):
     
     async def _classify_with_claude(self, work_description: str, context: Dict[str, Any]) -> OperationResult:
         """
-        Call Claude Sonnet 4 API for work classification
+        Call Claude Sonnet 4 API for work classification using official Anthropic client
         
         Args:
             work_description: The work to be classified
@@ -319,56 +321,57 @@ class AiWorkClassificationEngineModule(AiWorkClassificationEngineInterface):
             if not self.config.claude_config or not self.config.claude_config.api_key:
                 return OperationResult.error("Claude API configuration missing")
             
+            # Initialize Anthropic client
+            client = anthropic.Anthropic(api_key=self.config.claude_config.api_key)
+            
             # Build prompt with classification standards and examples
             prompt = self._build_classification_prompt(work_description, context)
             
-            # Call Claude API
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.config.claude_config.api_key}",
-                "User-Agent": "AI-Work-Classification-Engine/1.0.0"
-            }
-            
-            payload = {
-                "model": self.config.claude_config.model,
-                "max_tokens": self.config.claude_config.max_tokens,
-                "temperature": self.config.claude_config.temperature,
-                "messages": [
+            # Call Claude Sonnet 4 API
+            message = await asyncio.to_thread(
+                client.messages.create,
+                model=self.config.claude_config.model,
+                max_tokens=self.config.claude_config.max_tokens,
+                temperature=self.config.claude_config.temperature,
+                system="You are an expert work classification system. Analyze work descriptions and classify them precisely according to the provided standards. Always respond with valid JSON in the exact format specified.",
+                messages=[
                     {
-                        "role": "system",
-                        "content": "You are an expert work classification system. Analyze work descriptions and classify them precisely according to the provided standards. Always respond with valid JSON in the exact format specified."
-                    },
-                    {
-                        "role": "user", 
+                        "role": "user",
                         "content": prompt
                     }
                 ]
-            }
+            )
             
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.config.claude_config.timeout)) as session:
-                async with session.post("https://api.anthropic.com/v1/messages", headers=headers, json=payload) as response:
-                    if response.status != 200:
-                        error_text = await response.text()
-                        return OperationResult.error(f"Claude API error: {response.status} - {error_text}")
+            # Extract Claude's response text
+            claude_text = message.content[0].text
+            logger.info(f"Claude Sonnet 4 response: {claude_text}")
+            
+            # Try to extract JSON from Claude's response
+            try:
+                # Claude might return the JSON wrapped in markdown code blocks
+                if "```json" in claude_text:
+                    json_start = claude_text.find("```json") + 7
+                    json_end = claude_text.find("```", json_start)
+                    claude_text = claude_text[json_start:json_end].strip()
+                elif "```" in claude_text:
+                    json_start = claude_text.find("```") + 3
+                    json_end = claude_text.find("```", json_start)
+                    claude_text = claude_text[json_start:json_end].strip()
+                
+                classification_data = json.loads(claude_text)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse Claude response as JSON: {claude_text}")
+                return OperationResult.error(f"Claude returned invalid JSON: {e}")
+            
+            # Validate response structure
+            validation_result = self._validate_claude_response(classification_data)
+            if not validation_result.success:
+                return validation_result
+            
+            return OperationResult.success(classification_data)
                     
-                    response_data = await response.json()
-                    
-                    # Extract and parse Claude's response
-                    claude_text = response_data["content"][0]["text"]
-                    classification_data = json.loads(claude_text)
-                    
-                    # Validate response structure
-                    validation_result = self._validate_claude_response(classification_data)
-                    if not validation_result.success:
-                        return validation_result
-                    
-                    return OperationResult.success(classification_data)
-                    
-        except asyncio.TimeoutError:
-            return OperationResult.error("Claude API timeout")
-        except json.JSONDecodeError as e:
-            return OperationResult.error(f"Invalid JSON response from Claude: {e}")
         except Exception as e:
+            logger.error(f"Claude Sonnet 4 API error: {e}")
             return OperationResult.error(f"Claude API integration error: {e}")
     
     def _build_classification_prompt(self, work_description: str, context: Dict[str, Any]) -> str:

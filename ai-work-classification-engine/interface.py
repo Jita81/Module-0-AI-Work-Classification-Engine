@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 
 
-from .types import AiWorkClassificationEngineConfig, AiWorkClassificationEngineInput, AiWorkClassificationEngineOutput, OperationResult, DomainEntity
+from classification_types import AiWorkClassificationEngineConfig, AiWorkClassificationEngineInput, AiWorkClassificationEngineOutput, OperationResult, DomainEntity
 
 
 class AiWorkClassificationEngineInterface(ABC):

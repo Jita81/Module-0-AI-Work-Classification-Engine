@@ -4,9 +4,9 @@ ai-work-classification-engine - AI_TODO: Add module description
 This module provides AI_TODO: describe what this module provides.
 """
 
-from .core import AiWorkClassificationEngineModule
-from .interface import AiWorkClassificationEngineInterface
-from .types import (
+from core import AiWorkClassificationEngineModule
+from interface import AiWorkClassificationEngineInterface
+from classification_types import (
     AiWorkClassificationEngineConfig,
     
     AiWorkClassificationEngineInput,

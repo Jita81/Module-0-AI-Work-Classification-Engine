@@ -5,6 +5,7 @@
 [![Framework](https://img.shields.io/badge/Framework-Standardized%20Modules%20v1.0.0-blue)](https://github.com/Jita81/Standardized-Modules-Framework-v1.0.0)
 [![Python](https://img.shields.io/badge/Python-3.9+-green)](https://python.org)
 [![Claude](https://img.shields.io/badge/AI-Claude%20Sonnet%204-purple)](https://anthropic.com)
+[![Anthropic](https://img.shields.io/badge/Client-Official%20Anthropic-orange)](https://github.com/anthropics/anthropic-sdk-python)
 [![Tests](https://img.shields.io/badge/Tests-95%25%20Coverage-brightgreen)](./ai-work-classification-engine/tests/)
 
 ## 🎯 Overview
@@ -13,13 +14,14 @@ The AI Work Classification Engine is an intelligent system that analyzes work de
 
 ### Key Features
 
-- **🤖 AI-Powered Classification**: Uses Claude Sonnet 4 for intelligent work analysis
+- **🤖 AI-Powered Classification**: Uses Claude Sonnet 4 via official Anthropic Python client
 - **📊 Multi-Dimensional Classification**: Size (XS-XXL), Complexity (Low-Critical), Type (Feature/Bug/etc.)
 - **🧠 Continuous Learning**: Learns from user feedback and improves over time
 - **⚡ Fast Response**: Sub-5 second classification with confidence scores
 - **🔧 Configurable Standards**: Customizable classification criteria and examples
 - **📈 Analytics & Reporting**: Track accuracy and improvement trends
 - **🐳 Production Ready**: Docker and Kubernetes deployment included
+- **🔌 Official Integration**: Uses Anthropic's official Python SDK for reliability
 
 ## 🏗️ Architecture
 
@@ -91,35 +93,45 @@ Built using the [Standardized Modules Framework v1.0.0](https://github.com/Jita8
 ### Basic Usage
 
 ```python
+import asyncio
 from ai_work_classification_engine.core import AiWorkClassificationEngineModule
-from ai_work_classification_engine.types import (
+from ai_work_classification_engine.classification_types import (
     AiWorkClassificationEngineConfig, 
     AiWorkClassificationEngineInput,
     ClaudeApiConfig
 )
 
-# Configure the engine
-claude_config = ClaudeApiConfig(api_key="your-api-key")
+# Configure the engine with Claude Sonnet 4
+claude_config = ClaudeApiConfig(
+    api_key="sk-ant-api03-...",  # Your Claude API key
+    model="claude-sonnet-4-20250514",
+    max_tokens=8192,
+    temperature=0
+)
 config = AiWorkClassificationEngineConfig(claude_config=claude_config)
 
 # Initialize the engine
 engine = AiWorkClassificationEngineModule(config)
 engine.initialize()
 
-# Classify work
-input_data = AiWorkClassificationEngineInput(
-    work_description="Add user authentication system with OAuth integration and password reset functionality"
-)
+# Classify work using Claude Sonnet 4
+async def classify_work():
+    input_data = AiWorkClassificationEngineInput(
+        work_description="Add user authentication system with OAuth integration and password reset functionality"
+    )
 
-result = await engine.execute_primary_operation(input_data)
+    result = await engine.execute_primary_operation(input_data)
 
-if result.success:
-    classification = result.data
-    print(f"Size: {classification.size.value} ({classification.size.confidence}%)")
-    print(f"Complexity: {classification.complexity.value} ({classification.complexity.confidence}%)")
-    print(f"Type: {classification.type.value} ({classification.type.confidence}%)")
-    print(f"Estimated Effort: {classification.estimated_effort}")
-    print(f"Reasoning: {classification.size.reasoning}")
+    if result.success:
+        classification = result.data
+        print(f"Size: {classification.size.value} ({classification.size.confidence}%)")
+        print(f"Complexity: {classification.complexity.value} ({classification.complexity.confidence}%)")
+        print(f"Type: {classification.type.value} ({classification.type.confidence}%)")
+        print(f"Estimated Effort: {classification.estimated_effort}")
+        print(f"Reasoning: {classification.size.reasoning}")
+
+# Run the classification
+asyncio.run(classify_work())
 ```
 
 ## 📊 Example Classifications
