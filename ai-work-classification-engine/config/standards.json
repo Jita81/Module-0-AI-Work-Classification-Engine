@@ -1,0 +1,94 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-01-07T00:00:00Z",
+  "size_standards": {
+    "XS": {
+      "description": "Trivial changes requiring minimal effort",
+      "effort_range": "< 1 day",
+      "characteristics": ["Text changes", "Simple styling", "Config updates"],
+      "examples": ["Change button text", "Update copyright year", "Fix typo", "Update README"]
+    },
+    "S": {
+      "description": "Small, well-defined changes",
+      "effort_range": "1-3 days",
+      "characteristics": ["Single component", "Minor additions", "Simple fixes"],
+      "examples": ["Add form validation", "New button variant", "Mobile responsive fix", "Simple API endpoint"]
+    },
+    "M": {
+      "description": "Medium-sized features with moderate complexity",
+      "effort_range": "1-2 weeks",
+      "characteristics": ["Multiple components", "Moderate integration", "Standard patterns"],
+      "examples": ["User registration flow", "Basic dashboard", "CRUD operations", "Simple workflow"]
+    },
+    "L": {
+      "description": "Large features requiring significant development",
+      "effort_range": "2-4 weeks",
+      "characteristics": ["Complex integration", "Multiple systems", "Advanced features"],
+      "examples": ["Payment processing", "Advanced search", "Multi-step workflows", "API integrations"]
+    },
+    "XL": {
+      "description": "Major features with complex requirements",
+      "effort_range": "1-2 months",
+      "characteristics": ["Multiple teams", "Complex architecture", "High risk"],
+      "examples": ["Complete authentication system", "Advanced analytics", "Multi-tenant architecture"]
+    },
+    "XXL": {
+      "description": "Enterprise-level initiatives",
+      "effort_range": "2+ months",
+      "characteristics": ["Platform changes", "Major architecture", "Multiple phases"],
+      "examples": ["Platform migration", "Complete system redesign", "Major technology upgrade"]
+    }
+  },
+  "complexity_standards": {
+    "Low": {
+      "description": "Well-understood work with established patterns",
+      "characteristics": ["Proven solutions", "Minimal unknowns", "Standard patterns"],
+      "examples": ["CRUD operations", "Standard forms", "Copy existing component", "Basic styling changes"]
+    },
+    "Medium": {
+      "description": "Some unknowns with moderate integration complexity",
+      "characteristics": ["Some research needed", "Moderate integration", "Multiple dependencies"],
+      "examples": ["Third-party API integration", "Custom validation logic", "Database schema changes"]
+    },
+    "High": {
+      "description": "Significant unknowns requiring extensive research",
+      "characteristics": ["New technology", "Complex algorithms", "High risk"],
+      "examples": ["Machine learning implementation", "Complex data processing", "Performance optimization"]
+    },
+    "Critical": {
+      "description": "Mission-critical work with extensive dependencies",
+      "characteristics": ["System-wide impact", "High availability requirements", "Extensive testing"],
+      "examples": ["Security implementation", "Core infrastructure changes", "Data migration"]
+    }
+  },
+  "type_standards": {
+    "Feature": {
+      "description": "New functionality or capabilities",
+      "examples": ["Add shopping cart", "User notifications", "Analytics dashboard", "Search functionality"]
+    },
+    "Enhancement": {
+      "description": "Improvements to existing functionality",
+      "examples": ["Improve performance", "Better user experience", "Additional options", "Accessibility improvements"]
+    },
+    "Bug": {
+      "description": "Defect fixes and corrections",
+      "examples": ["Fix login issue", "Correct calculation error", "Resolve display problem", "Memory leak fix"]
+    },
+    "Infrastructure": {
+      "description": "Platform, tooling, or system improvements",
+      "examples": ["CI/CD pipeline", "Monitoring setup", "Database optimization", "Security hardening"]
+    },
+    "Migration": {
+      "description": "Moving or upgrading systems and data",
+      "examples": ["Database migration", "Cloud migration", "Framework upgrade", "Legacy system replacement"]
+    },
+    "Research": {
+      "description": "Investigation, proof of concepts, and spikes",
+      "examples": ["Technology evaluation", "Performance analysis", "Feasibility study", "Architecture spike"]
+    },
+    "Epic": {
+      "description": "Large initiative containing multiple features",
+      "examples": ["Complete user management", "E-commerce platform", "Mobile application", "Analytics system"]
+    }
+  }
+}

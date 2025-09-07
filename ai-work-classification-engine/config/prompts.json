@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "classification_prompt": {
+    "system_message": "You are an expert work classification system. Analyze work descriptions and classify them precisely according to the provided standards. Always respond with valid JSON in the exact format specified.",
+    "user_prompt_template": "Classify this work item:\n\n\"{work_description}\"\n\nUsing these standards:\n{classification_standards}\n\nConsider these successful examples:\n{relevant_patterns}\n\nRespond with valid JSON in this exact format:\n{output_format}",
+    "output_format": {
+      "size": {"value": "XS|S|M|L|XL|XXL", "confidence": "0-100", "reasoning": "brief explanation"},
+      "complexity": {"value": "Low|Medium|High|Critical", "confidence": "0-100", "reasoning": "brief explanation"},
+      "type": {"value": "Feature|Enhancement|Bug|Infrastructure|Migration|Research|Epic", "confidence": "0-100", "reasoning": "brief explanation"},
+      "estimated_effort": "human readable estimate",
+      "recommended_approach": "suggested process or framework"
+    }
+  },
+  "api_config": {
+    "model": "claude-sonnet-4-20250514",
+    "max_tokens": 1000,
+    "temperature": 0.1,
+    "timeout": 30
+  }
+}

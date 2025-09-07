@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "created_at": "2025-01-07T00:00:00Z",
+  "description": "Initial configuration with baseline classification standards",
+  "changes": [
+    "Initial size standards (XS through XXL)",
+    "Initial complexity standards (Low through Critical)", 
+    "Initial type standards (Feature, Enhancement, Bug, Infrastructure, Migration, Research, Epic)",
+    "Claude Sonnet 4 API configuration",
+    "Basic prompt templates"
+  ],
+  "prompts": {
+    "system_message": "You are an expert work classification system. Analyze work descriptions and classify them precisely according to the provided standards. Always respond with valid JSON in the exact format specified.",
+    "api_config": {
+      "model": "claude-sonnet-4-20250514",
+      "max_tokens": 1000,
+      "temperature": 0.1,
+      "timeout": 30
+    }
+  },
+  "standards": {
+    "size_count": 6,
+    "complexity_count": 4,
+    "type_count": 7
+  }
+}
