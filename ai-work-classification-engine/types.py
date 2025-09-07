@@ -1,49 +1,179 @@
 """
 Type definitions for ai-work-classification-engine
+
+This module defines all data types for the AI Work Classification Engine,
+including classification inputs/outputs, configuration, and domain entities.
 """
 
 from typing import Dict, Any, List, Optional, Generic, TypeVar
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
 
 T = TypeVar('T')
 
+# Classification Enums
+class WorkSize(Enum):
+    """Work size classification"""
+    XS = "XS"  # < 1 day
+    S = "S"    # 1-3 days
+    M = "M"    # 1-2 weeks
+    L = "L"    # 2-4 weeks
+    XL = "XL"  # 1-2 months
+    XXL = "XXL" # 2+ months
+
+class WorkComplexity(Enum):
+    """Work complexity classification"""
+    LOW = "Low"
+    MEDIUM = "Medium"
+    HIGH = "High"
+    CRITICAL = "Critical"
+
+class WorkType(Enum):
+    """Work type classification"""
+    FEATURE = "Feature"
+    ENHANCEMENT = "Enhancement"
+    BUG = "Bug"
+    INFRASTRUCTURE = "Infrastructure"
+    MIGRATION = "Migration"
+    RESEARCH = "Research"
+    EPIC = "Epic"
+
+class FeedbackType(Enum):
+    """Types of user feedback"""
+    ACCEPT = "accept"
+    EDIT = "edit"
+    REJECT = "reject"
+
+# Configuration Types
+@dataclass
+class ClaudeApiConfig:
+    """Configuration for Claude API integration"""
+    api_key: str
+    model: str = "claude-sonnet-4-20250514"
+    max_tokens: int = 1000
+    temperature: float = 0.1
+    timeout: int = 30
+
+@dataclass
+class ClassificationStandards:
+    """Standards for work classification"""
+    size_standards: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    complexity_standards: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    type_standards: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+
 @dataclass
 class AiWorkClassificationEngineConfig:
     """Configuration for ai-work-classification-engine module"""
-    
-    # AI_TODO: Define configuration fields for business logic
     domain: str = "ai-analysis"
     persist_audit_trail: bool = True
     max_audit_events: int = 1000
-    # AI_TODO: Add domain-specific configuration
     
+    # Claude API configuration
+    claude_config: ClaudeApiConfig = None
+    
+    # Classification configuration
+    classification_standards: ClassificationStandards = field(default_factory=ClassificationStandards)
+    
+    # Learning configuration
+    learning_trigger_threshold: int = 10  # Number of feedback items to trigger learning
+    pattern_confidence_threshold: float = 0.5  # Minimum confidence for pattern detection
+    auto_update_config: bool = True  # Whether to automatically update configuration
+    
+    # File paths
+    config_dir: str = "config"
+    data_dir: str = "data"
+    patterns_dir: str = "patterns"
 
+# Input/Output Types
+@dataclass
+class ClassificationDimension:
+    """A single classification dimension result"""
+    value: str
+    confidence: int  # 0-100
+    reasoning: str
 
 @dataclass
 class AiWorkClassificationEngineInput:
-    """Input data for ai-work-classification-engine operations"""
-    # AI_TODO: Define input fields for your business operations
-    operation_type: str = "default"
-    # AI_TODO: Add business-specific input fields
+    """Input data for work classification operations"""
+    work_description: str
+    context: Dict[str, Any] = field(default_factory=dict)
+    user_id: Optional[str] = None
+    project_context: Optional[str] = None
 
 @dataclass
 class AiWorkClassificationEngineOutput:
-    """Output data from ai-work-classification-engine operations"""
-    # AI_TODO: Define output fields for your business results
-    result: str
-    audit_trail: List[Dict[str, Any]] = None
-    # AI_TODO: Add business-specific output fields
+    """Output data from work classification operations"""
+    classification_id: str
+    size: ClassificationDimension
+    complexity: ClassificationDimension
+    type: ClassificationDimension
+    estimated_effort: str
+    recommended_approach: str
+    timestamp: datetime = field(default_factory=datetime.utcnow)
+    audit_trail: List[Dict[str, Any]] = field(default_factory=list)
+
+# Feedback Types
+@dataclass
+class FeedbackCorrection:
+    """Correction for a classification dimension"""
+    value: str
+    reasoning: str
+
+@dataclass
+class ClassificationFeedback:
+    """User feedback on a classification"""
+    classification_id: str
+    feedback_type: FeedbackType
+    corrections: Dict[str, FeedbackCorrection] = field(default_factory=dict)
+    additional_context: Optional[str] = None
+    user_id: Optional[str] = None
+    timestamp: datetime = field(default_factory=datetime.utcnow)
+
+# Learning Types
+@dataclass
+class PatternDetection:
+    """Detected pattern from user feedback"""
+    pattern_name: str
+    work_characteristics: List[str]
+    correction_pattern: Dict[str, str]  # dimension -> correction pattern
+    frequency: int
+    confidence: float
+    examples: List[str]
+
+@dataclass
+class ConfigurationUpdate:
+    """Configuration update based on learning"""
+    version: str
+    changes: Dict[str, Any]
+    pattern_source: PatternDetection
+    timestamp: datetime = field(default_factory=datetime.utcnow)
+    applied: bool = False
+
+# Domain Entities
+@dataclass
+class WorkClassification:
+    """A completed work classification"""
+    classification_id: str
+    work_description: str
+    size: ClassificationDimension
+    complexity: ClassificationDimension
+    type: ClassificationDimension
+    estimated_effort: str
+    recommended_approach: str
+    context: Dict[str, Any]
+    feedback: Optional[ClassificationFeedback] = None
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=datetime.utcnow)
 
 @dataclass
 class DomainEntity:
-    """Core domain entity for ai-work-classification-engine"""
-    # AI_TODO: Define your main business entity
+    """Base domain entity for ai-work-classification-engine"""
     entity_id: str
-    created_at: datetime
-    updated_at: datetime
-    # AI_TODO: Add domain-specific entity fields
+    entity_type: str
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=datetime.utcnow)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class BusinessRule:
