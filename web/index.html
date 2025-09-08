@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Work Classification Engine - MVP</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .mvp-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        textarea, input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .classification-result {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .dimension {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .dimension h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .confidence {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .feedback-buttons {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .feedback-buttons button {
+            margin: 5px;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .accept { background: #28a745; }
+        .edit { background: #ffc107; color: #000; }
+        .reject { background: #dc3545; }
+        .config-section {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .feature-flags {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .flag {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .flag input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+        .cost-warning {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AI Work Classification Engine</h1>
+        <p>MVP Version - Addressing Critical Feedback</p>
+    </div>
+
+    <div class="mvp-notice">
+        <h3>🎯 MVP Approach</h3>
+        <p>This interface restores the original web UI specification. Complex features (multi-prompt, repository intelligence) are disabled by default to address concerns about over-engineering and cost.</p>
+    </div>
+
+    <div class="container">
+        <!-- Classification Section -->
+        <div class="card">
+            <h2>Work Classification</h2>
+            <div class="form-group">
+                <label for="workDescription">Work Description:</label>
+                <textarea id="workDescription" placeholder="Enter work description (10-5000 characters)..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="priority">Priority:</label>
+                <select id="priority">
+                    <option value="">Select priority</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="team">Team:</label>
+                <input type="text" id="team" placeholder="Team name (optional)">
+            </div>
+            <button onclick="classifyWork()" id="classifyBtn">Classify Work</button>
+            <div id="classificationResult"></div>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="card">
+            <h2>Feature Configuration</h2>
+            <p>Control which features are enabled (addresses over-engineering feedback):</p>
+            
+            <div class="feature-flags">
+                <div class="flag">
+                    <input type="checkbox" id="enableMultiPrompt" onchange="updateFeatureFlags()">
+                    <label for="enableMultiPrompt">Multi-Prompt System</label>
+                </div>
+                <div class="flag">
+                    <input type="checkbox" id="enableRepository" onchange="updateFeatureFlags()">
+                    <label for="enableRepository">Repository Intelligence</label>
+                </div>
+                <div class="flag">
+                    <input type="checkbox" id="enableScenarios" checked onchange="updateFeatureFlags()">
+                    <label for="enableScenarios">Master Scenarios</label>
+                </div>
+                <div class="flag">
+                    <input type="checkbox" id="enableAdvancedLearning" onchange="updateFeatureFlags()">
+                    <label for="enableAdvancedLearning">Advanced Learning</label>
+                </div>
+            </div>
+
+            <div class="cost-warning" id="costWarning" style="display: none;">
+                ⚠️ Multi-prompt system increases API costs by 700% (7 Claude calls vs 1)
+            </div>
+
+            <button onclick="testConfiguration()" id="testConfigBtn">Test Current Config</button>
+            <div id="configResult"></div>
+        </div>
+    </div>
+
+    <!-- Results and Feedback Section -->
+    <div class="config-section">
+        <h2>System Status</h2>
+        <div id="systemStatus">
+            <p>Loading system status...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let lastClassificationId = null;
+
+        // Load system status on page load
+        window.onload = function() {
+            loadSystemStatus();
+            loadFeatureFlags();
+        };
+
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const status = await response.json();
+                
+                document.getElementById('systemStatus').innerHTML = `
+                    <div class="result">
+                        <h4>System Health: ${status.status}</h4>
+                        <p>Module: ${status.module_name}</p>
+                        <p>Business Rules: ${status.business_rules_count}</p>
+                        <p>Timestamp: ${new Date(status.timestamp).toLocaleString()}</p>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('systemStatus').innerHTML = `
+                    <div class="result error">
+                        <h4>System Offline</h4>
+                        <p>Cannot connect to API server. Please ensure the backend is running.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadFeatureFlags() {
+            // Set defaults based on MVP configuration
+            document.getElementById('enableMultiPrompt').checked = false;
+            document.getElementById('enableRepository').checked = false;
+            document.getElementById('enableScenarios').checked = true;
+            document.getElementById('enableAdvancedLearning').checked = false;
+            updateFeatureFlags();
+        }
+
+        function updateFeatureFlags() {
+            const multiPrompt = document.getElementById('enableMultiPrompt').checked;
+            const costWarning = document.getElementById('costWarning');
+            
+            if (multiPrompt) {
+                costWarning.style.display = 'block';
+            } else {
+                costWarning.style.display = 'none';
+            }
+        }
+
+        async function classifyWork() {
+            const workDescription = document.getElementById('workDescription').value.trim();
+            const priority = document.getElementById('priority').value;
+            const team = document.getElementById('team').value.trim();
+            
+            if (!workDescription) {
+                alert('Please enter a work description');
+                return;
+            }
+
+            if (workDescription.length < 10 || workDescription.length > 5000) {
+                alert('Work description must be between 10 and 5000 characters');
+                return;
+            }
+
+            const classifyBtn = document.getElementById('classifyBtn');
+            const resultDiv = document.getElementById('classificationResult');
+            
+            classifyBtn.disabled = true;
+            classifyBtn.textContent = 'Classifying...';
+            
+            try {
+                const context = {};
+                if (priority) context.priority = priority;
+                if (team) context.team = team;
+
+                const response = await fetch(`${API_BASE}/api/classify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        work_description: workDescription,
+                        context: context
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                lastClassificationId = result.classification_id;
+                
+                displayClassificationResult(result, resultDiv);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>Classification Failed</h4>
+                        <p>${error.message}</p>
+                        <p>Check that the API server is running and Claude API key is configured.</p>
+                    </div>
+                `;
+            } finally {
+                classifyBtn.disabled = false;
+                classifyBtn.textContent = 'Classify Work';
+            }
+        }
+
+        function displayClassificationResult(result, container) {
+            const classification = result.classification;
+            
+            container.innerHTML = `
+                <div class="result">
+                    <h4>Classification Result</h4>
+                    <div class="classification-result">
+                        <div class="dimension">
+                            <h4>Size</h4>
+                            <div class="value">${classification.size.value}</div>
+                            <div class="confidence">${classification.size.confidence}% confidence</div>
+                        </div>
+                        <div class="dimension">
+                            <h4>Complexity</h4>
+                            <div class="value">${classification.complexity.value}</div>
+                            <div class="confidence">${classification.complexity.confidence}% confidence</div>
+                        </div>
+                        <div class="dimension">
+                            <h4>Type</h4>
+                            <div class="value">${classification.type.value}</div>
+                            <div class="confidence">${classification.type.confidence}% confidence</div>
+                        </div>
+                    </div>
+                    <p><strong>Estimated Effort:</strong> ${result.estimated_effort || 'Not provided'}</p>
+                    <p><strong>Recommended Approach:</strong> ${result.recommended_approach || 'Not provided'}</p>
+                    
+                    <div class="feedback-buttons">
+                        <button class="accept" onclick="submitFeedback('accept')">✓ Accept</button>
+                        <button class="edit" onclick="submitFeedback('edit')">✎ Edit</button>
+                        <button class="reject" onclick="submitFeedback('reject')">✗ Reject & Rerun</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function submitFeedback(feedbackType) {
+            if (!lastClassificationId) {
+                alert('No classification to provide feedback on');
+                return;
+            }
+
+            try {
+                let feedbackData = {
+                    classification_id: lastClassificationId,
+                    feedback_type: feedbackType
+                };
+
+                if (feedbackType === 'edit') {
+                    // Simple edit feedback - in a full implementation, you'd show edit forms
+                    const newSize = prompt('New size (XS, S, M, L, XL, XXL):');
+                    if (newSize) {
+                        feedbackData.corrections = {
+                            size: { value: newSize, reasoning: 'User correction' }
+                        };
+                    }
+                } else if (feedbackType === 'reject') {
+                    const context = prompt('Why was this classification wrong?');
+                    if (context) {
+                        feedbackData.additional_context = context;
+                    }
+                }
+
+                const response = await fetch(`${API_BASE}/api/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(feedbackData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                alert(`Feedback recorded: ${result.status}${result.triggered_learning ? ' (Learning triggered!)' : ''}`);
+                
+            } catch (error) {
+                alert(`Failed to record feedback: ${error.message}`);
+            }
+        }
+
+        async function testConfiguration() {
+            const testBtn = document.getElementById('testConfigBtn');
+            const resultDiv = document.getElementById('configResult');
+            
+            testBtn.disabled = true;
+            testBtn.textContent = 'Testing...';
+            
+            try {
+                // Test with a simple work description
+                const response = await fetch(`${API_BASE}/api/classify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        work_description: "Add a simple login form to the website",
+                        context: { test: true }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="result">
+                        <h4>Configuration Test: Success</h4>
+                        <p>Basic classification is working correctly.</p>
+                        <p>API response time: ${response.headers.get('X-Response-Time') || 'N/A'}</p>
+                        <p>Classification confidence: ${Math.round((result.classification.size.confidence + result.classification.complexity.confidence + result.classification.type.confidence) / 3)}%</p>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>Configuration Test: Failed</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = 'Test Current Config';
+            }
+        }
+    </script>
+</body>
+</html>

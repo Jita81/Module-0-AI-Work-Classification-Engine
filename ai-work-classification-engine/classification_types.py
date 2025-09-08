@@ -80,6 +80,13 @@ class AiWorkClassificationEngineConfig:
     pattern_confidence_threshold: float = 0.5  # Minimum confidence for pattern detection
     auto_update_config: bool = True  # Whether to automatically update configuration
     
+    # MVP Feature Flags - Addressing critical feedback about over-engineering
+    enable_multi_prompt_system: bool = False  # Single prompt by default (cost control)
+    enable_repository_intelligence: bool = False  # No repository analysis by default
+    enable_master_scenarios: bool = True  # Keep scenarios (proven value, low cost)
+    enable_web_interface: bool = True  # Restore web interface as originally specified
+    enable_advanced_learning: bool = False  # Basic learning only by default
+    
     # File paths
     config_dir: str = "config"
     data_dir: str = "data"

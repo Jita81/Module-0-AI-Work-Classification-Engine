@@ -61,6 +61,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files for web interface (addressing frontend removal criticism)
+import os
+web_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "web")
+if os.path.exists(web_dir):
+    app.mount("/web", StaticFiles(directory=web_dir), name="web")
+    print(f"📱 Web interface mounted at /web (addressing frontend removal feedback)")
+
 # Pydantic models for API
 class ClassificationRequest(BaseModel):
     work_description: str = Field(..., min_length=10, max_length=5000)
@@ -79,6 +86,15 @@ class FeedbackRequest(BaseModel):
 classification_engine: Optional[AiWorkClassificationEngineModule] = None
 multi_prompt_engine: Optional[SelfImprovingClassificationEngine] = None
 repository_service: Optional[RepositoryClassificationService] = None
+
+# MVP Configuration - Addressing critical feedback about over-engineering
+MVP_CONFIG = {
+    "enable_multi_prompt_system": False,  # Single prompt by default
+    "enable_repository_intelligence": False,  # No repository analysis by default
+    "enable_master_scenarios": True,  # Keep scenarios (low cost, high value)
+    "enable_web_interface": True,  # Restore web interface as specified
+    "enable_advanced_learning": False,  # Basic learning only
+}
 
 def get_engine() -> AiWorkClassificationEngineModule:
     """Get or create the classification engine instance"""
@@ -513,8 +529,15 @@ async def get_configuration_levers():
 
 @app.post("/api/classify/enhanced")
 async def classify_work_enhanced(request: ClassificationRequest):
-    """Enhanced classification using multi-prompt analysis for optimal accuracy"""
+    """Enhanced classification using multi-prompt analysis (if enabled) - WARNING: 7x API cost"""
     try:
+        # MVP Feature Flag Check - Addressing critical feedback about cost
+        if not MVP_CONFIG["enable_multi_prompt_system"]:
+            raise HTTPException(
+                status_code=501, 
+                detail="Multi-prompt system disabled by default (700% cost increase). Use /api/classify for basic classification or enable feature flag."
+            )
+        
         multi_engine = get_multi_prompt_engine()
         
         # Use self-improving multi-prompt classification
@@ -874,8 +897,15 @@ class RepositoryAnalysisRequest(BaseModel):
 
 @app.post("/api/repository/analyze")
 async def analyze_repository(request: RepositoryAnalysisRequest):
-    """Analyze entire repository using master scenario library"""
+    """Analyze entire repository using master scenario library (if enabled)"""
     try:
+        # MVP Feature Flag Check - Repository intelligence is complex and unvalidated
+        if not MVP_CONFIG["enable_repository_intelligence"]:
+            raise HTTPException(
+                status_code=501,
+                detail="Repository intelligence disabled by default (complex feature without proven ROI). Enable repository_intelligence feature flag to use."
+            )
+        
         repo_service = get_repository_service()
         
         # Validate repository path
